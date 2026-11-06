@@ -45,8 +45,8 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
  ok(await p.evaluate(()=>S.msgs.length===2&&S.msgs[0].from==='dad'&&S.msgs.some(m=>m.kind==='report')),'보고 메시지 + 메시지 전송');
 
  // 컨펌·의견
- await p.click('[data-tab="conf"]');await p.click('[data-conf]:first-of-type');await p.waitForTimeout(200);
- ok(await p.evaluate(()=>Object.keys(S.conf).length===1),'컨펌 저장');
+ await p.click('[data-tab="conf"]');await p.waitForTimeout(200);
+ ok(await p.evaluate(()=>!document.querySelector('[data-conf]')&&/의견 남기기/.test(document.getElementById('main').textContent)),'설정 탭: 컨펌 보드 없음, 의견 남기기만');
  await p.fill('#fbtext','문구가 세요');await p.click('#fbsend');await p.waitForTimeout(200);
  ok(await p.evaluate(()=>S.fb.length===1&&S.fb[0].text==='문구가 세요'),'의견 저장');
  await p.click('[data-donefb]');await p.waitForTimeout(200);
@@ -59,7 +59,7 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
  // 새로고침 후 유지
  await p.reload();await p.waitForTimeout(700);
  const st=await p.evaluate(()=>({n:S.cfg.name,ms:!!S.ms.s1,pl:S.plays.length,m:S.msgs.length,c:Object.keys(S.conf).length,f:S.fb.length,role:E.role}));
- ok(st.n==='하늘'&&st.ms&&st.pl===1&&st.m===2&&st.c===1&&st.f===1&&st.role==='dad','새로고침 후 데이터 유지 '+JSON.stringify(st));
+ ok(st.n==='하늘'&&st.ms&&st.pl===1&&st.m===2&&st.c===0&&st.f===1&&st.role==='dad','새로고침 후 데이터 유지 '+JSON.stringify(st));
 
  // 모든 탭이 오류 없이 렌더
  ok(!(await p.isVisible('[data-tab="mom"]')),'아빠 역할에는 엄마의 눈 탭이 안 보임');

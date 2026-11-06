@@ -31,6 +31,27 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
  ok(await m.evaluate(()=>E.role==='mom'&&S.cfg.name==='콩이'),'엄마 탭: 역할 엄마, 아빠가 만든 아이 정보 보임');
  await m.evaluate(()=>addErrand('두부 사와','wayhome'));await m.waitForTimeout(1500);
  ok(await d.evaluate(()=>S.errands.some(e=>e.text==='두부 사와')),'엄마 탭에서 적은 심부름이 아빠 탭에 실시간 도착');
+ // --- 아빠 보고가 엄마에게 알림으로 도착 (엄마가 다른 탭을 보는 중)
+ await m.click('[data-tab="check"]');await m.waitForTimeout(300);
+ await d.evaluate(()=>sendMsg('report','오늘 보고 테스트','',true));
+ await m.waitForFunction(()=>/도착했어요/.test(document.getElementById('toast').textContent)&&!document.getElementById('toast').hidden,null,{timeout:6000}).then(()=>ok(true,'엄마: 아빠 보고 도착 알림(토스트)')).catch(()=>ok(false,'보고 알림 없음'));
+ ok(await m.evaluate(()=>unread()>0)&&await m.evaluate(()=>!document.querySelector('nav [data-tab="mom"] .dot').hidden),'엄마 탭에 안 읽음 점 표시');
+ // --- 엄마 폰 연결 해제 → 아빠가 새 코드로 다른 폰 연결
+ await m.click('[data-tab="conf"]');await m.waitForTimeout(300);await m.click('[data-famleave]');await m.waitForTimeout(2500);
+ await d.waitForFunction(()=>!!document.querySelector('[data-tab="conf"]'),null,{timeout:3000});
+ await d.click('[data-tab="conf"]');await d.waitForTimeout(800);
+ ok(await d.evaluate(()=>/해제했어요/.test(document.getElementById('famcard').textContent)&&!!document.querySelector('[data-newinvite]')&&!document.getElementById('invcode')),'해제 후 아빠: 이전(사용된) 코드 숨기고 새 코드 만들기 안내');
+ await d.click('[data-newinvite]');await d.waitForTimeout(2500);
+ const code2=await d.evaluate(()=>(document.getElementById('invcode')||{}).textContent);
+ ok(/^[A-Z2-9]{6}$/.test(code2||'')&&code2!==fam.code,'새 초대 코드 발급 '+code2);
+ const m2=await mk('?profile=mom2&join='+code2);
+ await m2.click('[data-c1]');await m2.click('[data-c2]');await m2.click('[data-consentgo]');await m2.waitForTimeout(500);
+ await m2.click('[data-joincheck]');await m2.waitForTimeout(1500);await m2.click('[data-joinconfirm]');
+ await m2.waitForFunction(()=>E.mode==='family',null,{timeout:20000}).then(()=>ok(true,'다른 폰이 새 코드로 합류')).catch(()=>ok(false,'새 코드 합류 '+m2.__e.join('|')));
+ const m3=await mk('?profile=mom3&join='+fam.code);
+ await m3.click('[data-c1]');await m3.click('[data-c2]');await m3.click('[data-consentgo]');await m3.waitForTimeout(500);
+ await m3.click('[data-joincheck]');await m3.waitForTimeout(1500);
+ ok(/이미 사용된 코드/.test(await m3.textContent('#sheet')),'예전 코드 재사용은 "이미 사용된 코드" 안내');
  ok(await d.evaluate(()=>/연결됨/.test(document.body.textContent)||E.mode==='family'),'아빠 탭: 연결됨');
  ok(![d,m].some(p=>p.__e.length),'JS 오류 없음 '+[d,m].map(p=>p.__e.join('|')).join(''));
  await b.close();srv.close();console.log(fails?fails+' FAIL':'ALL PASS');process.exit(fails?1:0);

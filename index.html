@@ -382,7 +382,7 @@ nav button:has(.dot){position:relative}
 <div class="wrap">
   <header class="top">
     <div><div class="who" id="who"></div><div class="age" id="age"></div><div id="devrole" hidden></div></div>
-    <button class="pill-btn" id="confbtn" data-tab="conf" aria-pressed="false">의견</button>
+    <button class="pill-btn" id="confbtn" data-tab="conf" aria-pressed="false" aria-label="설정" title="설정">⚙️</button>
   </header>
   <main id="main"></main>
   <details class="foot"><summary>출처·참고용 안내·저장 방식</summary><p id="foot"></p></details>
@@ -650,7 +650,7 @@ const BK=['거의 못함','1~2번','3~4번','5번 이상'];
 const RX=['잘 따라함','보통','힘들어함'];
 
 /* ---------- 상태 ---------- */
-const VERSION='0.16';
+const VERSION='0.17';
 const DEF_BIRTH=(()=>{const d=new Date();d.setMonth(d.getMonth()-30);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const S={cfg:{name:'우리 아이',birth:DEF_BIRTH,sex:'',ck:''},ms:{},plays:[],log:[],body:[],growth:[],ref:{},assign:{},assignBook:{},assignTs:{},errands:[],memo:{},shelf:[],members:[],msgs:[],conf:{},fb:[]};
 const E={op:{},mk:null,gk:null,cbirth:'',role:null,srole:null,seen:0,sname:'',fbtext:'',fbfeat:'dad',db:null,uid:null,canWrite:true,tab:'dad',cfgSet:false,cardId:null,picked:false,mins:15,left:900,running:false,tick:null,pending:false,rx:null,bk:null,sbirth:'',ssex:'',gh:null,gw:null,gwarn:null,loaded:false};
@@ -688,6 +688,25 @@ async function saveRole(role){
   try{LS.setItem('role',role)}catch(e){}
   if(E.db&&E.uid){try{await E.db.doc('data/users/'+E.uid+'/me').set({role,seen:E.seen})}catch(e){}}
 }
+/* 상대가 보낸 새 메시지(보고·지시·메모)가 앱이 열려 있는 동안 도착하면 소리·진동·알림으로 알린다.
+   앱이 완전히 닫혀 있을 때의 푸시는 서버 기능(FCM)이 필요해서 아직 없다. */
+let NOTI_T=null;
+function notifyIncoming(){
+  if(E.mode!=='family')return;
+  if(NOTI_T===null)document.addEventListener('pointerdown',function f(){document.removeEventListener('pointerdown',f);askNotify()},{once:true});
+  const o=E.role==='mom'?'dad':'mom',L=S.msgs.filter(m=>m.from===o);
+  const top=L.reduce((a,m)=>Math.max(a,m.ts||0),0);
+  if(NOTI_T===null){NOTI_T=Math.max(top,E.seen||0);return}   // 첫 로딩: 이미 있던 건 알리지 않음
+  const fresh=L.filter(m=>m.ts>NOTI_T);if(!fresh.length)return;
+  NOTI_T=top;
+  const m=fresh.sort((a,b)=>b.ts-a.ts)[0],who=o==='dad'?'아빠':'엄마',what=m.kind==='report'?'보고':'메시지';
+  const onTab=E.tab===(E.role==='mom'?'mom':'dad');
+  if(onTab&&!document.hidden)return;    // 이미 그 화면을 보는 중
+  toast(`📩 ${who}의 ${what}가 도착했어요`);
+  try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}
+  try{unlockAudio();if(AC){const o1=AC.createOscillator(),g=AC.createGain(),at=AC.currentTime;o1.frequency.value=880;o1.connect(g);g.connect(AC.destination);g.gain.setValueAtTime(.0001,at);g.gain.exponentialRampToValueAtTime(.3,at+.02);g.gain.exponentialRampToValueAtTime(.0001,at+.35);o1.start(at);o1.stop(at+.4)}}catch(e){}
+  try{if(document.hidden&&'Notification' in window&&Notification.permission==='granted'){const o2={body:String(m.text||'').slice(0,80),icon:'icons/icon-192.png',tag:'dpn-msg'};if(navigator.serviceWorker&&navigator.serviceWorker.ready)navigator.serviceWorker.ready.then(r=>r.showNotification(`${who}의 ${what}`,o2));else new Notification(`${who}의 ${what}`,o2)}}catch(e){}
+}
 function unread(){const o=E.role==='mom'?'dad':'mom';return S.msgs.filter(m=>m.from===o&&m.ts>E.seen).length}
 async function setConf(id,status){
   const rec={status,by:E.role||'dad',ts:Date.now()};
@@ -715,8 +734,9 @@ const FEATS=[
   {id:'msg',t:'칭찬·채찍질 메시지'}
 ];
 const CHANGES=[
+  {v:'0.17',d:'2026-11-06',l:['버튼 글자를 "시작"으로, 오늘 목표를 15·30·45·60분 중에서 고르기','우측 위 ⚙️ 설정으로 이름 변경, 컨펌 보드 삭제(의견 남기기만 유지)','상대 폰이 연결을 해제하면 새 초대 코드를 만들 수 있게 안내 (한 번 쓴 코드는 다시 못 씀)','상대가 보낸 보고·메시지가 앱이 열려 있을 때 소리·진동·알림으로 도착']},
   {v:'0.16',d:'2026-11-06',l:['테스트 프로필(?profile=이름): 한 브라우저에서 아빠 폰·엄마 폰처럼 저장소와 Firebase 로그인을 나눔','dev-split.html: 한 화면에 두 폰을 나란히 띄워 가족 연결·동기화를 PC에서 시험']},
-  {v:'0.15.1',d:'2026-11-06',l:['가족을 만든 사람이 역할(아빠/엄마)을 잘못 골랐을 때, 상대가 합류하기 전이면 의견 탭에서 역할을 바꾸고 새 초대 코드를 받을 수 있어요']},
+  {v:'0.15.1',d:'2026-11-06',l:['가족을 만든 사람이 역할(아빠/엄마)을 잘못 골랐을 때, 상대가 합류하기 전이면 설정 탭에서 역할을 바꾸고 새 초대 코드를 받을 수 있어요']},
   {v:'0.15',d:'2026-11-06',l:['엄마·아빠 폰 연결(Firebase): 초대 코드로 합류, 같은 기록을 실시간으로 공유','연결 시 동의 화면, 연결 해제·가족 기록 삭제, 한 역할에 한 명·1회용 초대(보안 규칙 에뮬레이터 검증)','연결하기 전에는 지금처럼 이 기기에만 저장']},
   {v:'0.14',d:'2026-11-06',l:['심부름 탭: 엄마가 "커피 사와" 같은 부탁을 적고 아빠가 체크, 아빠 오늘 화면에도 표시','엄마 전달 메모(아이 상태)가 아빠 화면 맨 위에','책: 카테고리별 읽는 법과 확인된 추천 책, 우리집 책장 등록, 책장 책부터 오늘의 도서','기록 백업(내보내기·불러오기), 홈 화면 설치 안내, 연속 일수']},
   {v:'0.13',d:'2026-11-06',l:['놀이마다 시간이 정해져 있지 않아요: 오늘 목표 시간(15·30분)을 따로 두고, 첫 놀이를 시작하면 그날의 카운트다운이 시작','놀이는 끝날 때마다 "완료" → 다음 추천이 나오고 또 골라서 하기 → 오늘 마무리하면 완료한 것을 엄마에게 한 번에 보고','카드 틀과 버튼은 고정하고 내용만 옆으로 미끄러지는 방식으로 변경 (회전·부채꼴 제거)']},
@@ -869,7 +889,7 @@ function head(){
   {const ed=document.querySelector('nav [data-tab="errand"] .dot');if(ed){const n=E.role==='mom'?0:errandOpen().length;ed.hidden=!n||E.tab==='errand';ed.textContent=n}}
   devUpdate();
   $('#age').innerHTML=E.cfgSet?'만 '+a.mo+'<small>개월</small>'+a.d+'<small>일</small>':'<small style="font-size:18px;margin:0">생일을 입력해 주세요</small>';
-  $('#foot').innerHTML='<b>참고용 안내</b> 이 앱의 내용은 의학적 진단·치료 조언이 아닙니다. 걱정되는 점은 소아과나 영유아 건강검진에서 상담하세요.<br><br>발달 기준: 미국 CDC "Learn the Signs. Act Early." 이정표(30개월·3세, 2026년 5월 개정본)를 바탕으로 한국어로 옮기고 단순화했습니다. 이정표는 아이의 75% 이상이 해당 월령까지 하는 행동입니다. 원문은 <a href="https://www.cdc.gov/act-early/milestones/index.html" target="_blank" rel="noopener">cdc.gov/act-early</a>에서 볼 수 있습니다. 이 앱은 CDC·HHS가 제작하거나 승인하거나 보증한 것이 아니며, 진단이나 선별검사가 아니고 영유아 건강검진(K-DST)과 소아과 상담을 대체하지 않습니다. 놀이 카드 중 "자체 구성"은 이정표를 바탕으로 만든 예시입니다.'+(Object.keys(S.ref).length?' 키·몸무게 기준: WHO Child Growth Standards.':'')+(E.db?'':' 지금은 저장되지 않는 미리보기 상태입니다.')+(E.local?'<br><br><b>저장 방식</b> 이 앱에는 서버가 없습니다. 입력한 내용은 이 기기의 브라우저에만 저장되고 개발자나 다른 사용자에게 전송되지 않습니다. 브라우저 데이터를 지우거나 앱을 삭제하면 기록이 사라지며, 다른 기기와는 공유되지 않습니다. 엄마·아빠 메시지와 지시는 한 기기를 같이 쓸 때만 보입니다.':'')+(E.mode==='family'?'<br><br><b>저장 방식</b> 가족 연결 중이라 입력한 내용이 구글 Firebase 서버(서울)에 저장되고, 엄마·아빠 두 사람의 기기에서만 볼 수 있어요. 의견 탭에서 연결 해제·기록 삭제를 할 수 있어요.':'');
+  $('#foot').innerHTML='<b>참고용 안내</b> 이 앱의 내용은 의학적 진단·치료 조언이 아닙니다. 걱정되는 점은 소아과나 영유아 건강검진에서 상담하세요.<br><br>발달 기준: 미국 CDC "Learn the Signs. Act Early." 이정표(30개월·3세, 2026년 5월 개정본)를 바탕으로 한국어로 옮기고 단순화했습니다. 이정표는 아이의 75% 이상이 해당 월령까지 하는 행동입니다. 원문은 <a href="https://www.cdc.gov/act-early/milestones/index.html" target="_blank" rel="noopener">cdc.gov/act-early</a>에서 볼 수 있습니다. 이 앱은 CDC·HHS가 제작하거나 승인하거나 보증한 것이 아니며, 진단이나 선별검사가 아니고 영유아 건강검진(K-DST)과 소아과 상담을 대체하지 않습니다. 놀이 카드 중 "자체 구성"은 이정표를 바탕으로 만든 예시입니다.'+(Object.keys(S.ref).length?' 키·몸무게 기준: WHO Child Growth Standards.':'')+(E.db?'':' 지금은 저장되지 않는 미리보기 상태입니다.')+(E.local?'<br><br><b>저장 방식</b> 이 앱에는 서버가 없습니다. 입력한 내용은 이 기기의 브라우저에만 저장되고 개발자나 다른 사용자에게 전송되지 않습니다. 브라우저 데이터를 지우거나 앱을 삭제하면 기록이 사라지며, 다른 기기와는 공유되지 않습니다. 엄마·아빠 메시지와 지시는 한 기기를 같이 쓸 때만 보입니다.':'')+(E.mode==='family'?'<br><br><b>저장 방식</b> 가족 연결 중이라 입력한 내용이 구글 Firebase 서버(서울)에 저장되고, 엄마·아빠 두 사람의 기기에서만 볼 수 있어요. 설정 탭에서 연결 해제·기록 삭제를 할 수 있어요.':'');
 }
 
 /* ---------- 입력 흐름 스크롤: 다음 입력으로 내려가고, 끝나면 맨 위로 ---------- */
@@ -1251,7 +1271,7 @@ async function sendReport(){
 /* 오늘 화면: 목표 시간 고르기(시작 전) / 오늘 한 것 */
 function goalRow(){
   if(dayActive()||ACT)return '';
-  return `<div class="goalrow"><span>오늘 놀이 시간</span><div class="seg" role="group" aria-label="오늘 목표 시간">${[15,30].map(g=>`<button data-goal="${g}" aria-pressed="${GOAL===g}">${g}분</button>`).join('')}</div></div>
+  return `<div class="goalrow"><span>오늘 놀이 시간</span><div class="seg" role="group" aria-label="오늘 목표 시간">${[15,30,45,60].map(g=>`<button data-goal="${g}" aria-pressed="${GOAL===g}">${g}분</button>`).join('')}</div></div>
   <p class="goalhint">첫 놀이를 시작하면 카운트가 시작돼요. 놀이마다 끝나면 "완료"를 눌러요.</p>`;
 }
 function todayCard(){
@@ -1292,7 +1312,7 @@ function missionCard(kind){
     if(t.kind==='cat')alt=catSuggest(t.cat);
     else if(t.kind==='catalog'||(t.kind==='tool'&&t.type==='named'&&t.avail==='unverified'))alt='<p class="tmeta">우리집에 없으면 도서관에서 빌리거나 서점에서 찾아보세요.</p>'+bookLinks(t)+(t.kind==='catalog'&&t.raw?`<div style="margin-top:6px"><button class="btn ghost sm" data-shelftoggle="${t.raw.id}">${shelfBooks().some(x=>x.cid===t.raw.id)?'✓ 책장에 있음':'우리집에 있어요 (책장에 추가)'}</button></div>`:'');
   }
-  const label=active?'진행 중… 위에서 완료를 눌러요':busy?'다른 놀이 진행 중':dayActive()?'이걸로 하기':`이걸로 시작 · 오늘 ${GOAL}분 카운트`;
+  const label=active?'진행 중… 위에서 완료를 눌러요':busy?'다른 놀이 진행 중':dayActive()?'시작':`시작 · 오늘 ${GOAL}분`;
   const inner=`<section class="mcard" id="card-${kind}" data-kind="${kind}">
     <div class="navrow"><button class="navbtn" data-cnav="${kind}:-1" aria-label="이전" ${list.length<2?'disabled':''}>‹</button>
       <div class="navmid"><span class="eyebrow">${kind==='play'?'오늘의 놀이':'오늘의 도서'}</span><span class="navcount">${idx+1} / ${list.length} · ${tag}</span></div>
@@ -1384,7 +1404,7 @@ function libDetail(){
     <p class="tmeta">근거 월령: ${esc(t.mo_src)}${t.note?' · '+esc(t.note):''}</p>
     ${ageFloat()<36?'<p class="tnote" style="margin-top:8px">36개월 미만은 작은 부품이 없는 도구만 써요.</p>':''}
     ${bs.length?`<div class="tcat">엄마들이 많이 쓰는 예</div>${bs.map(b=>`<div class="bitem"><b>${esc(b.name)}</b> <span class="tag">${esc(RELN[b.rel]||b.rel)}</span>${b.flags.map(f=>`<span class="tag warn">${esc(FLAGN[f]||f)}</span>`).join('')}${b.limits?`<div class="tmeta">사용 한계: ${esc(b.limits)}</div>`:''}</div>`).join('')}`:''}`;
-    btn='이걸로 하기 (바로 시작)';
+    btn='시작';
   }
   return `<div class="lib-top"><button class="link" data-libback>‹ 목록</button><button class="xbtn" data-libclose aria-label="닫기">✕</button></div><div class="lib-detail">${h}</div>
   <div class="sheet-bar"><button class="btn big" data-libpick>${btn}</button></div>`;
@@ -1513,7 +1533,7 @@ function safetyFold(){
 }
 function famBanner(){
   if(E.famFail)return `<section class="card errcard"><b>가족 기록을 불러오지 못했어요</b><p class="muted" style="margin:4px 0 8px">인터넷 연결을 확인하고 다시 시도해 주세요. 그동안은 저장되지 않아요.</p><button class="btn sm" data-reload>다시 시도</button></section>`;
-  if(E.famDenied)return `<section class="card errcard"><b>가족 연결이 끊겼어요</b><p class="muted" style="margin:4px 0 8px">상대가 연결을 해제했거나 가족 기록에 접근할 수 없어요. 의견 탭에서 연결 상태를 확인해 주세요.</p></section>`;
+  if(E.famDenied)return `<section class="card errcard"><b>가족 연결이 끊겼어요</b><p class="muted" style="margin:4px 0 8px">상대가 연결을 해제했거나 가족 기록에 접근할 수 없어요. 설정 탭에서 연결 상태를 확인해 주세요.</p></section>`;
   return '';
 }
 function famNudge(){return E.local&&E.cfgSet&&!ACT?`<button class="card libcard" data-famnew><span><b>엄마와 연결하기</b><small>심부름·메모·보고가 엄마 폰에 바로 떠요</small></span><span class="chev">›</span></button>`:''}
@@ -1643,7 +1663,7 @@ function viewMom(){
   else if(n0>0)msg=`${CURSET}개월 기준일이 지났고 '아직'인 항목이 ${n0}개 있어요. CDC 안내는 이정표를 못 하거나 하던 걸 못 하게 됐거나 걱정되는 점이 있으면 기다리지 말고 소아과에서 발달 선별검사를 상의하라는 것입니다.`;
   else msg=CURSET+'개월 이정표를 모두 "잘함"으로 체크했어요. 발달 체크의 다음 단계 미리보기로 방향을 잡아보세요.';
   h+=`<details class="fold" data-k="note"${isOpen('note',false)?' open':''}><summary>엄마가 볼 참고 안내</summary><div class="fbody"><p style="font-size:14px">${esc(msg)} 이 화면은 진단이 아니에요.</p></div></details>`;
-  h+=`<details class="fold" data-k="set"${isOpen('set',false)?' open':''}><summary>설정 (이름·생일)</summary><div class="fbody"><div class="row" style="align-items:flex-end;gap:12px"><label class="field" style="flex:1">아이 이름<input id="cname" type="text" maxlength="12" value="${esc(S.cfg.name)}"${dis}></label><button class="btn" id="csave"${dis}>저장</button></div><div>${wheelHTML('cbirth',E.cbirth||S.cfg.birth)}</div>${E.local?'<p class="muted">엄마·아빠 폰 연결은 의견 탭에서 할 수 있어요. 연결하기 전에는 이 기기 안에서만 보입니다.</p>':E.mode==='family'?'<p class="muted">가족 연결 상태는 의견 탭에서 볼 수 있어요.</p>':'<p class="muted">엄마 초대: 이 페이지의 공유 메뉴에서 이메일로 초대하세요. 같이 기록하려면 "기여자"로 초대합니다.</p>'}</div></details>`;
+  h+=`<details class="fold" data-k="set"${isOpen('set',false)?' open':''}><summary>설정 (이름·생일)</summary><div class="fbody"><div class="row" style="align-items:flex-end;gap:12px"><label class="field" style="flex:1">아이 이름<input id="cname" type="text" maxlength="12" value="${esc(S.cfg.name)}"${dis}></label><button class="btn" id="csave"${dis}>저장</button></div><div>${wheelHTML('cbirth',E.cbirth||S.cfg.birth)}</div>${E.local?'<p class="muted">엄마·아빠 폰 연결은 설정 탭에서 할 수 있어요. 연결하기 전에는 이 기기 안에서만 보입니다.</p>':E.mode==='family'?'<p class="muted">가족 연결 상태는 설정 탭에서 볼 수 있어요.</p>':'<p class="muted">엄마 초대: 이 페이지의 공유 메뉴에서 이메일로 초대하세요. 같이 기록하려면 "기여자"로 초대합니다.</p>'}</div></details>`;
   return h;
 }
 const p2=n=>String(n).padStart(2,'0');
@@ -1683,10 +1703,7 @@ function wheelInit(ws){
 const CST={ok:'컨펌 OK',fix:'수정 요청',cut:'빼 주세요'};
 function viewConf(){
   const dis=E.canWrite?'':' disabled';
-  const n=FEATS.length,ok=FEATS.filter(f=>(S.conf[f.id]||{}).status==='ok').length;
-  let h=`<p class="lead"><b>컨펌 보드 v${VERSION}</b><br>${ok}/${n}개 컨펌됨. 기능마다 버튼 하나로 답해 주세요.</p>`;
-  h+=`<section class="card">${FEATS.map(f=>{const c=S.conf[f.id];const parts=f.t.split(':');return `<div class="feat"><div><b>${esc(parts[0])}</b>${c?` <span class="tag ${c.status==='ok'?'ok':''}">${CST[c.status]} · ${c.by==='mom'?'엄마':'아빠'}</span>`:' <span class="tag">대기</span>'}${parts[1]?`<div class="muted">${esc(parts.slice(1).join(':').trim())}</div>`:''}</div>
-  <div class="seg wide">${Object.keys(CST).map(k=>`<button data-conf="${f.id}:${k}" aria-pressed="${!!c&&c.status===k}"${dis}>${CST[k]}</button>`).join('')}</div></div>`}).join('')}</section>`;
+  let h='';
   h+=`<section class="card"><h2>의견 남기기</h2>
   <div class="q">어느 기능?</div><div class="chips">${FEATS.map(f=>`<button class="btn sm ${E.fbfeat===f.id?'':'ghost'}" data-fbfeat="${f.id}">${esc(f.t.split(':')[0])}</button>`).join('')}</div>
   <label class="field" style="margin-top:14px">한 줄 의견<input id="fbtext" type="text" maxlength="300" placeholder="예: 채찍질 문구가 너무 세요" value="${esc(E.fbtext)}"${dis}></label>
@@ -2049,7 +2066,7 @@ async function newInvite(){
   const b=F.writeBatch(db);
   b.set(F.doc(db,'invites/'+code),{familyId:fam.fid,role:other,createdBy:uid,usedBy:null,expiresAt:exp,createdAt:now});
   await b.commit();
-  lsSet(FAM_KEY,Object.assign({},fam,{code,codeExp:exp}));
+  lsSet(FAM_KEY,Object.assign({},fam,{code,codeExp:exp,wasPaired:false}));
 }
 /* 가족을 만든 사람이 역할을 잘못 골랐을 때(상대가 아직 합류 전일 때만): 내 역할을 바꾸고 새 초대 코드를 만든다 */
 async function switchFamilyRole(){
@@ -2069,7 +2086,7 @@ async function switchFamilyRole(){
   b2.set(F.doc(db,'invites/'+code),{familyId:fam.fid,role:old,createdBy:uid,usedBy:null,expiresAt:exp,createdAt:now});
   b2.set(F.doc(db,'users/'+uid),{familyId:fam.fid,role:nr});
   let ok=false;for(let i=0;i<2&&!ok;i++){try{await b2.commit();ok=true}catch(e){await new Promise(r=>setTimeout(r,800))}}
-  if(!ok)return{err:'역할을 바꾸는 중 연결이 끊겼어요. 의견 탭에서 이 폰 연결을 해제한 뒤 다시 시작해 주세요.'};
+  if(!ok)return{err:'역할을 바꾸는 중 연결이 끊겼어요. 설정 탭에서 이 폰 연결을 해제한 뒤 다시 시작해 주세요.'};
   lsSet(FAM_KEY,{fid:fam.fid,role:nr,code,codeExp:exp});try{LS.setItem('role',nr)}catch(e){}
   return{ok:true};
 }
@@ -2099,7 +2116,7 @@ function consentHTML(kind){
   <ul class="plain consent"><li><b>저장되는 것</b> 아이 애칭·생년월·성별, 키·몸무게, 발달 체크, 놀이·도서 기록, 심부름·메모·메시지</li>
   <li><b>저장 위치</b> 구글 Firebase 서버(서울). 엄마·아빠 두 사람만 읽고 쓸 수 있어요.</li>
   <li><b>개발자</b>는 서버 관리 화면에서 저장된 내용을 볼 수 있어요. 실명·연락처·사진은 받지 않아요. 실명 대신 애칭을 써 주세요.</li>
-  <li><b>삭제</b> 의견 탭에서 언제든 연결을 해제하거나 가족 기록을 모두 지울 수 있어요.</li></ul>
+  <li><b>삭제</b> 설정 탭에서 언제든 연결을 해제하거나 가족 기록을 모두 지울 수 있어요.</li></ul>
   <label class="chk"><input type="checkbox" data-c1> 위 내용에 동의해요 (필수)</label>
   <label class="chk"><input type="checkbox" data-c2> 아이의 키·몸무게·발달 정보 등 건강 관련 정보를 저장하는 데 동의해요 (필수)</label>
   <div class="fin-actions"><button class="btn big" data-consentgo="${kind}" disabled>동의하고 계속</button></div>
@@ -2112,7 +2129,7 @@ function joinHTML(){
     const me=J.inv.role==='mom'?'엄마':'아빠',other=J.inv.role==='mom'?'아빠':'엄마';
     return `<div class="sheet-grab"></div><h2>${other}가 만든 가족이에요</h2>
     <p style="margin:6px 0">이 폰은 <b>${me}</b>로 합류해요. 합류하면 ${other}의 아이 정보와 기록이 보여요.</p>
-    <p class="muted">이 기기에 있던 기존 기록은 가족 기록에 합쳐지지 않아요. (백업 파일은 의견 탭에서 저장할 수 있어요.)</p>
+    <p class="muted">이 기기에 있던 기존 기록은 가족 기록에 합쳐지지 않아요. (백업 파일은 설정 탭에서 저장할 수 있어요.)</p>
     <div class="fin-actions"><button class="btn big" data-joinconfirm>합류하기</button></div><div style="margin-top:8px"><button class="link" data-sheetclose>취소</button></div>`;
   }
   return `<div class="sheet-grab"></div><h2>초대 코드 입력</h2><p class="muted" style="margin:4px 0 8px">상대가 보여 준 6자리 코드를 입력해요.</p>
@@ -2131,13 +2148,14 @@ function famCard(){
   const fam=E.fam||lsGet(FAM_KEY,null);if(!fam)return '';
   const roles=(S.members||[]).map(m=>m.role),me=fam.role==='mom'?'엄마':'아빠',other=fam.role==='mom'?'아빠':'엄마';
   const paired=roles.includes(fam.role==='mom'?'dad':'mom');
-  const exp=fam.codeExp&&fam.codeExp>Date.now();
+  if(paired&&!fam.wasPaired){fam.wasPaired=true;lsSet(FAM_KEY,fam)}
+  const exp=fam.codeExp&&fam.codeExp>Date.now()&&!fam.wasPaired;
   const link=`${location.origin}${location.pathname}?join=${fam.code||''}`;
   return `<section class="card" id="famcard"><h3>엄마·아빠 폰 연결</h3>
   <p style="margin:6px 0"><span class="tag ok">연결됨</span> 이 폰은 <b>${me}</b> · ${paired?`<b>${other}</b>도 연결됐어요 ✓`:`${other}를 기다리는 중이에요`}</p>
   ${paired?'<p class="muted">심부름·메모·지시·보고가 두 폰에서 같이 보여요.</p>':(exp&&fam.code?`<div class="codebox"><div class="muted">${other}에게 이 코드를 알려 주세요 (7일간, 한 번만 쓸 수 있어요)</div><div class="code" id="invcode">${esc(fam.code)}</div>
     <div class="row" style="gap:8px;margin-top:8px"><button class="btn sm" data-sharecode>코드·링크 공유</button><button class="btn ghost sm" data-copycode>코드 복사</button></div><p class="tmeta" style="margin-top:6px">${esc(link)}</p></div>`
-    :`<p class="muted">초대 코드가 만료됐어요.</p><button class="btn sm" data-newinvite>새 초대 코드 만들기</button>`)}
+    :`<p class="muted">${fam.wasPaired?`${other} 폰이 연결을 해제했어요. 다른 폰을 연결하려면 새 초대 코드를 만들어 주세요. (이전 코드는 한 번 쓰이면 다시 쓸 수 없어요)`:'초대 코드가 만료됐어요.'}</p><button class="btn sm" data-newinvite>새 초대 코드 만들기</button>`)}
   ${paired?'':`<div style="margin-top:10px"><button class="btn ghost sm" data-famswitch>역할을 잘못 골랐어요 (${me} → ${other}로 바꾸기)</button></div>`}
   <div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost sm" data-famleave>이 폰 연결 해제</button><button class="btn ghost sm" data-famwipe>가족 기록 모두 삭제</button></div>
   <p class="tmeta" style="margin-top:6px">연결 해제는 이 폰만 가족에서 빠져요. 상대 폰과 기록은 그대로예요.</p></section>`;
@@ -2183,7 +2201,7 @@ if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)&&typeof clau
   db.collection('body').orderBy('ts','desc').limit(200).onSnapshot(q=>{S.body=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},er);
   db.collection('assign').onSnapshot(q=>{const o={},ob={},ot={};q.docs.forEach(d=>{const v=d.data();o[d.id]=v.cardId;ob[d.id]=v.bookId;ot[d.id]=v.ts||0});S.assign=o;S.assignBook=ob;S.assignTs=ot;render()},er);
   db.collection('ref').onSnapshot(q=>{const o={};q.docs.forEach(d=>{const r=d.data().rows;if(Array.isArray(r))o[d.id]=r});S.ref=o;render()},er);
-  db.collection('msgs').orderBy('ts','desc').limit(60).onSnapshot(q=>{S.msgs=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},er);
+  db.collection('msgs').orderBy('ts','desc').limit(60).onSnapshot(q=>{S.msgs=q.docs.map(d=>Object.assign({id:d.id},d.data()));notifyIncoming();render()},er);
   db.collection('conf').onSnapshot(q=>{const o={};q.docs.forEach(d=>o[d.id]=d.data());S.conf=o;render()},er);
   db.collection('fb').orderBy('ts','desc').limit(60).onSnapshot(q=>{S.fb=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},er);
   db.collection('errands').orderBy('ts','desc').limit(200).onSnapshot(q=>{S.errands=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},er);
