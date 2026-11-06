@@ -17,6 +17,9 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
  ok(kd.some(k=>k.startsWith('p_dad_'))&&kd.some(k=>k.startsWith('p_mom_')),'같은 브라우저에 p_dad_ / p_mom_ 키가 따로 저장 ('+kd.filter(k=>/^p_/.test(k)).length+'개)');
  ok(!kd.includes('dpn_db')&&!kd.includes('role'),'프로필 모드는 기본 키(dpn_db 등)를 건드리지 않음');
  ok(await d.evaluate(()=>E.role)==='dad'&&await m.evaluate(()=>E.role)==='mom','두 프로필의 역할이 각자 유지 (아빠/엄마)');
+ {await d.addInitScript(()=>{window.__seen=false;new MutationObserver(()=>{if(document.querySelector('#ssave'))window.__seen=true}).observe(document,{childList:true,subtree:true})});
+  await d.reload();await d.waitForTimeout(900);
+  ok(await d.evaluate(()=>window.__seen===false),'저장된 정보가 있으면 새로고침 중에 아이 입력 창이 깜빡이지 않음')}
  n=await mk('');ok(await n.evaluate(()=>document.getElementById('profbadge').hidden),'프로필 없으면 배지 없음');
  await d.evaluate(()=>{addErrand('아빠만 아는 메모','any')});await d.waitForTimeout(400);
  await m.reload();await m.waitForTimeout(900);

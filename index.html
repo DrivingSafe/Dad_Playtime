@@ -650,10 +650,10 @@ const BK=['거의 못함','1~2번','3~4번','5번 이상'];
 const RX=['잘 따라함','보통','힘들어함'];
 
 /* ---------- 상태 ---------- */
-const VERSION='0.17';
+const VERSION='0.17.1';
 const DEF_BIRTH=(()=>{const d=new Date();d.setMonth(d.getMonth()-30);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const S={cfg:{name:'우리 아이',birth:DEF_BIRTH,sex:'',ck:''},ms:{},plays:[],log:[],body:[],growth:[],ref:{},assign:{},assignBook:{},assignTs:{},errands:[],memo:{},shelf:[],members:[],msgs:[],conf:{},fb:[]};
-const E={op:{},mk:null,gk:null,cbirth:'',role:null,srole:null,seen:0,sname:'',fbtext:'',fbfeat:'dad',db:null,uid:null,canWrite:true,tab:'dad',cfgSet:false,cardId:null,picked:false,mins:15,left:900,running:false,tick:null,pending:false,rx:null,bk:null,sbirth:'',ssex:'',gh:null,gw:null,gwarn:null,loaded:false};
+const E={booting:true,op:{},mk:null,gk:null,cbirth:'',role:null,srole:null,seen:0,sname:'',fbtext:'',fbfeat:'dad',db:null,uid:null,canWrite:true,tab:'dad',cfgSet:false,cardId:null,picked:false,mins:15,left:900,running:false,tick:null,pending:false,rx:null,bk:null,sbirth:'',ssex:'',gh:null,gw:null,gwarn:null,loaded:false};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -734,6 +734,7 @@ const FEATS=[
   {id:'msg',t:'칭찬·채찍질 메시지'}
 ];
 const CHANGES=[
+  {v:'0.17.1',d:'2026-11-06',l:['새로고침할 때 아이 입력 창이 잠깐 보이던 문제 수정 (저장된 정보를 불러온 뒤에 화면을 그림)']},
   {v:'0.17',d:'2026-11-06',l:['버튼 글자를 "시작"으로, 오늘 목표를 15·30·45·60분 중에서 고르기','우측 위 ⚙️ 설정으로 이름 변경, 컨펌 보드 삭제(의견 남기기만 유지)','상대 폰이 연결을 해제하면 새 초대 코드를 만들 수 있게 안내 (한 번 쓴 코드는 다시 못 씀)','상대가 보낸 보고·메시지가 앱이 열려 있을 때 소리·진동·알림으로 도착']},
   {v:'0.16',d:'2026-11-06',l:['테스트 프로필(?profile=이름): 한 브라우저에서 아빠 폰·엄마 폰처럼 저장소와 Firebase 로그인을 나눔','dev-split.html: 한 화면에 두 폰을 나란히 띄워 가족 연결·동기화를 PC에서 시험']},
   {v:'0.15.1',d:'2026-11-06',l:['가족을 만든 사람이 역할(아빠/엄마)을 잘못 골랐을 때, 상대가 합류하기 전이면 설정 탭에서 역할을 바꾸고 새 초대 코드를 받을 수 있어요']},
@@ -1725,6 +1726,7 @@ function render(){
   {const tb=tabsFor();if(E.tab!=='conf'&&!tb.includes(E.tab))E.tab=tb[0]}
   head();
   if(E.role&&E.tab===(E.role==='mom'?'mom':'dad')&&unread())markSeen();
+  if(E.booting){$('#main').innerHTML='<p class="muted" style="text-align:center;padding:40px 0">불러오는 중…</p>';return}
   const v=E.tab==='dad'?viewDad():E.tab==='check'?viewCheck():E.tab==='grow'?viewGrow():E.tab==='conf'?viewConf():E.tab==='errand'?viewErrand():viewMom();
   $('#main').innerHTML=v;bind();
 }
@@ -2180,8 +2182,10 @@ if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)&&typeof clau
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){timerTick();if(dayActive())wakeOn()}});
   dayEnsure();
   if(dayActive()||ACT){ensureTick();if(DAY.state==='running'&&Date.now()>=DAY.end){DAY.state='over';DAY.goalShown=true;daySave();paintBar();openGoalSheet()}else if(DAY.state==='over'&&!DAY.goalShown){DAY.goalShown=true;daySave();openGoalSheet()}else wakeOn()}
+  setTimeout(()=>{if(E.booting){E.booting=false;render()}},4000);
   const {db,user}=await getBackend();
-  if(!db){render();return}
+  if(!db){E.booting=false;render();return}
+  if(E.famFail){E.booting=false;render()}
   if(jm&&E.mode==='local'){try{history.replaceState(null,'',location.pathname+(PROFILE?'?profile='+PROFILE:'')+location.hash)}catch(e){}setTimeout(()=>openConsent('join',jm[1].toUpperCase()),400)}
   E.db=db;
   try{const w=user?await user.can('data.write'):null;if(w===false)E.canWrite=false}catch(e){}
@@ -2192,9 +2196,9 @@ if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)&&typeof clau
   }
   if(DEV.on&&DEV.view!=='all')E.role=DEV.view;
   if(!location.hash){E.tab=E.role==='mom'||(!E.canWrite&&!E.role)?'mom':'dad'}
-  const er=e=>{if(e&&e.code==='revoked'){E.db=null;render()}if(e&&e.code==='permission-denied'&&E.mode==='family'&&!E.famDenied){E.famDenied=true;render()}};
+  const er=e=>{E.booting=false;if(e&&e.code==='revoked'){E.db=null;render()}if(e&&e.code==='permission-denied'&&E.mode==='family'&&!E.famDenied){E.famDenied=true;render()}};
   if(E.mode==='family'&&!E.famFail){db.collection('members').onSnapshot(q=>{S.members=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},er)}
-  db.doc('config/child').onSnapshot(s=>{if(s.exists){S.cfg=Object.assign({},S.cfg,s.data());E.cfgSet=true}render()},er);
+  db.doc('config/child').onSnapshot(s=>{if(s.exists){S.cfg=Object.assign({},S.cfg,s.data());E.cfgSet=true}E.booting=false;render()},er);
   db.collection('ms').onSnapshot(q=>{const o={};q.docs.forEach(d=>o[d.id]=d.data());S.ms=o;render()},er);
   db.collection('plays').orderBy('ts','desc').limit(300).onSnapshot(q=>{S.plays=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},er);
   db.collection('log').orderBy('ts','desc').limit(300).onSnapshot(q=>{S.log=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},er);
