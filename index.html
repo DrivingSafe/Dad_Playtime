@@ -643,7 +643,7 @@ const BK=['거의 못함','1~2번','3~4번','5번 이상'];
 const RX=['잘 따라함','보통','힘들어함'];
 
 /* ---------- 상태 ---------- */
-const VERSION='0.15';
+const VERSION='0.15.1';
 const DEF_BIRTH=(()=>{const d=new Date();d.setMonth(d.getMonth()-30);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const S={cfg:{name:'우리 아이',birth:DEF_BIRTH,sex:'',ck:''},ms:{},plays:[],log:[],body:[],growth:[],ref:{},assign:{},assignBook:{},assignTs:{},errands:[],memo:{},shelf:[],members:[],msgs:[],conf:{},fb:[]};
 const E={op:{},mk:null,gk:null,cbirth:'',role:null,srole:null,seen:0,sname:'',fbtext:'',fbfeat:'dad',db:null,uid:null,canWrite:true,tab:'dad',cfgSet:false,cardId:null,picked:false,mins:15,left:900,running:false,tick:null,pending:false,rx:null,bk:null,sbirth:'',ssex:'',gh:null,gw:null,gwarn:null,loaded:false};
@@ -708,6 +708,7 @@ const FEATS=[
   {id:'msg',t:'칭찬·채찍질 메시지'}
 ];
 const CHANGES=[
+  {v:'0.15.1',d:'2026-11-06',l:['가족을 만든 사람이 역할(아빠/엄마)을 잘못 골랐을 때, 상대가 합류하기 전이면 의견 탭에서 역할을 바꾸고 새 초대 코드를 받을 수 있어요']},
   {v:'0.15',d:'2026-11-06',l:['엄마·아빠 폰 연결(Firebase): 초대 코드로 합류, 같은 기록을 실시간으로 공유','연결 시 동의 화면, 연결 해제·가족 기록 삭제, 한 역할에 한 명·1회용 초대(보안 규칙 에뮬레이터 검증)','연결하기 전에는 지금처럼 이 기기에만 저장']},
   {v:'0.14',d:'2026-11-06',l:['심부름 탭: 엄마가 "커피 사와" 같은 부탁을 적고 아빠가 체크, 아빠 오늘 화면에도 표시','엄마 전달 메모(아이 상태)가 아빠 화면 맨 위에','책: 카테고리별 읽는 법과 확인된 추천 책, 우리집 책장 등록, 책장 책부터 오늘의 도서','기록 백업(내보내기·불러오기), 홈 화면 설치 안내, 연속 일수']},
   {v:'0.13',d:'2026-11-06',l:['놀이마다 시간이 정해져 있지 않아요: 오늘 목표 시간(15·30분)을 따로 두고, 첫 놀이를 시작하면 그날의 카운트다운이 시작','놀이는 끝날 때마다 "완료" → 다음 추천이 나오고 또 골라서 하기 → 오늘 마무리하면 완료한 것을 엄마에게 한 번에 보고','카드 틀과 버튼은 고정하고 내용만 옆으로 미끄러지는 방식으로 변경 (회전·부채꼴 제거)']},
@@ -1729,6 +1730,7 @@ function bind(){
   m.querySelectorAll('[data-copycode]').forEach(b=>b.onclick=async()=>{const f=lsGet(FAM_KEY,{});try{await navigator.clipboard.writeText(f.code||'');toast('코드를 복사했어요.')}catch(e){toast('코드: '+(f.code||''))}});
   m.querySelectorAll('[data-sharecode]').forEach(b=>b.onclick=async()=>{const f=lsGet(FAM_KEY,{}),link=`${location.origin}${location.pathname}?join=${f.code}`,text=`놀이수첩 가족 초대 코드: ${f.code}\n${link}`;try{if(navigator.share)await navigator.share({title:'놀이수첩 가족 초대',text,url:link});else{await navigator.clipboard.writeText(text);toast('코드와 링크를 복사했어요.')}}catch(e){}});
   m.querySelectorAll('[data-newinvite]').forEach(b=>b.onclick=async()=>{famBusy('새 코드를 만드는 중…');try{await newInvite();sheetHide();E.fam=lsGet(FAM_KEY,null);render()}catch(e){sheetHide();toast('만들지 못했어요. 다시 시도해 주세요.')}});
+  m.querySelectorAll('[data-famswitch]').forEach(b=>b.onclick=async()=>{const f=lsGet(FAM_KEY,{}),to=f.role==='mom'?'아빠':'엄마';if(!confirm(`이 폰의 역할을 ${to}로 바꾸고 새 초대 코드를 만들까요? 이전 코드는 쓸 수 없게 돼요.`))return;famBusy('역할을 바꾸는 중…');const r=await switchFamilyRole();if(r.err){sheetShow(`<div class="sheet-grab"></div><h2>바꾸지 못했어요</h2><p class="muted">${esc(r.err)}</p><div class="fin-actions"><button class="btn big" data-sheetclose>닫기</button></div>`,'fin');return}location.reload()});
   m.querySelectorAll('[data-famleave]').forEach(b=>b.onclick=async()=>{if(!confirm('이 폰의 가족 연결을 해제할까요? 상대 폰과 기록은 그대로 남아요.'))return;famBusy('연결을 해제하는 중…');await leaveFamily();location.reload()});
   m.querySelectorAll('[data-famwipe]').forEach(b=>b.onclick=async()=>{if(!confirm('가족 기록(아이 정보, 놀이·도서 기록, 심부름, 메모, 메시지 등)을 모두 삭제할까요? 엄마·아빠 두 폰에서 모두 사라지고 되돌릴 수 없어요.'))return;famBusy('기록을 삭제하는 중…');try{const n=await deleteFamilyData();sheetHide();toast(n+'개 기록을 삭제했어요.');setTimeout(()=>location.reload(),900)}catch(e){sheetHide();toast('삭제하지 못했어요. 다시 시도해 주세요.')}});
   m.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>{GOAL=Number(b.dataset.goal);lsSet(GOAL_KEY,GOAL);render()});
@@ -2041,6 +2043,28 @@ async function newInvite(){
   await b.commit();
   lsSet(FAM_KEY,Object.assign({},fam,{code,codeExp:exp}));
 }
+/* 가족을 만든 사람이 역할을 잘못 골랐을 때(상대가 아직 합류 전일 때만): 내 역할을 바꾸고 새 초대 코드를 만든다 */
+async function switchFamilyRole(){
+  const fam=lsGet(FAM_KEY,null);if(!fam)return{err:'연결 정보가 없어요.'};
+  if((S.members||[]).some(m=>m.role!==fam.role))return{err:'상대가 이미 합류해서 바꿀 수 없어요. 두 폰 모두 연결을 해제한 뒤 다시 시작해 주세요.'};
+  const nr=fam.role==='mom'?'dad':'mom',old=fam.role;
+  const {db,F}=await fbLoad();const uid=await fbUid();
+  try{
+    const b1=F.writeBatch(db);
+    b1.delete(F.doc(db,`families/${fam.fid}/members/${uid}`));b1.delete(F.doc(db,`families/${fam.fid}/roles/${old}`));
+    await b1.commit();
+  }catch(e){return{err:'바꾸지 못했어요. 인터넷 연결을 확인해 주세요.'}}
+  const code=genCode(),now=Date.now(),exp=now+7*864e5;
+  const b2=F.writeBatch(db);
+  b2.set(F.doc(db,`families/${fam.fid}/members/${uid}`),{role:nr,joinedAt:now,seen:0});
+  b2.set(F.doc(db,`families/${fam.fid}/roles/${nr}`),{uid,at:now});
+  b2.set(F.doc(db,'invites/'+code),{familyId:fam.fid,role:old,createdBy:uid,usedBy:null,expiresAt:exp,createdAt:now});
+  b2.set(F.doc(db,'users/'+uid),{familyId:fam.fid,role:nr});
+  let ok=false;for(let i=0;i<2&&!ok;i++){try{await b2.commit();ok=true}catch(e){await new Promise(r=>setTimeout(r,800))}}
+  if(!ok)return{err:'역할을 바꾸는 중 연결이 끊겼어요. 의견 탭에서 이 폰 연결을 해제한 뒤 다시 시작해 주세요.'};
+  lsSet(FAM_KEY,{fid:fam.fid,role:nr,code,codeExp:exp});try{localStorage.setItem('role',nr)}catch(e){}
+  return{ok:true};
+}
 async function leaveFamily(){
   const fam=lsGet(FAM_KEY,null);if(!fam)return;
   try{
@@ -2106,6 +2130,7 @@ function famCard(){
   ${paired?'<p class="muted">심부름·메모·지시·보고가 두 폰에서 같이 보여요.</p>':(exp&&fam.code?`<div class="codebox"><div class="muted">${other}에게 이 코드를 알려 주세요 (7일간, 한 번만 쓸 수 있어요)</div><div class="code" id="invcode">${esc(fam.code)}</div>
     <div class="row" style="gap:8px;margin-top:8px"><button class="btn sm" data-sharecode>코드·링크 공유</button><button class="btn ghost sm" data-copycode>코드 복사</button></div><p class="tmeta" style="margin-top:6px">${esc(link)}</p></div>`
     :`<p class="muted">초대 코드가 만료됐어요.</p><button class="btn sm" data-newinvite>새 초대 코드 만들기</button>`)}
+  ${paired?'':`<div style="margin-top:10px"><button class="btn ghost sm" data-famswitch>역할을 잘못 골랐어요 (${me} → ${other}로 바꾸기)</button></div>`}
   <div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost sm" data-famleave>이 폰 연결 해제</button><button class="btn ghost sm" data-famwipe>가족 기록 모두 삭제</button></div>
   <p class="tmeta" style="margin-top:6px">연결 해제는 이 폰만 가족에서 빠져요. 상대 폰과 기록은 그대로예요.</p></section>`;
 }

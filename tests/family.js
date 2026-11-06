@@ -123,6 +123,38 @@ const W=ms=>new Promise(r=>setTimeout(r,ms));
  const left=await a.evaluate(async()=>{await new Promise(r=>setTimeout(r,800));return{plays:S.plays.length,errands:S.errands.length,cfg:S.cfg.name}});
  ok(left.plays===0&&left.errands===0,'가족 기록 모두 삭제 → 놀이·심부름 기록이 사라짐 ('+JSON.stringify(left)+')');
 
+ // ---- 역할을 잘못 골랐을 때(상대 합류 전): 바꾸기 ----
+ const E1=await phone(),e1=E1.p;
+ await e1.goto(url);await e1.waitForTimeout(900);await setup(e1,'mom','실수'); // 아빠인데 엄마로 잘못 시작
+ await e1.click('[data-tab="conf"]');await e1.click('[data-famnew]');await e1.waitForTimeout(300);await e1.click('[data-c1]');await e1.click('[data-c2]');await e1.click('[data-consentgo]');
+ await e1.waitForFunction(()=>E.mode==='family',null,{timeout:20000});await e1.waitForTimeout(1500);
+ const wrong=await e1.evaluate(()=>JSON.parse(localStorage.getItem('dpn_fam')));
+ ok(wrong.role==='mom','(실수) 엄마로 가족을 만듦, 초대는 아빠용');
+ await e1.click('[data-tab="conf"]');await e1.waitForTimeout(600);
+ ok(!!(await e1.$('[data-famswitch]')),'상대가 합류하기 전에는 "역할을 잘못 골랐어요" 버튼이 보임');
+ await e1.click('[data-famswitch]');
+ await e1.waitForFunction(()=>E.mode==='family'&&JSON.parse(localStorage.getItem('dpn_fam')).role==='dad',null,{timeout:20000}).then(()=>ok(true,'역할이 아빠로 바뀌고 다시 가족 모드')).catch(()=>ok(false,'역할 바꾸기 (errs: '+e1.__errs.join('|')+')'));
+ await e1.waitForTimeout(1500);
+ const fixed=await e1.evaluate(()=>JSON.parse(localStorage.getItem('dpn_fam')));
+ ok(fixed.fid===wrong.fid&&fixed.code&&fixed.code!==wrong.code,'같은 가족, 새 초대 코드 발급 ('+wrong.code+' → '+fixed.code+')');
+ ok(await e1.evaluate(()=>E.role==='dad'&&S.members.length===1&&S.members[0].role==='dad'),'구성원이 아빠 1명으로 정리됨');
+ // 이전(잘못된) 코드는 쓸 수 없다
+ const F1=await phone(),f1=F1.p;await f1.goto(url);await f1.waitForTimeout(900);
+ await f1.click('[data-famjoin]');await f1.waitForTimeout(300);await f1.click('[data-c1]');await f1.click('[data-c2]');await f1.click('[data-consentgo]');await f1.waitForTimeout(300);
+ await f1.fill('#joincode',wrong.code);await f1.click('[data-joincheck]');await f1.waitForTimeout(1800);
+ await f1.click('[data-joinconfirm]').catch(()=>{});await f1.waitForTimeout(2500);
+ ok(await f1.evaluate(()=>E.mode==='local'&&/합류하지 못했어요/.test(document.getElementById('sheet').textContent)),'이전(잘못된) 코드로는 합류 불가 — 아빠 자리는 이미 찼음');
+ // 새 코드로 엄마 폰 합류
+ await f1.evaluate(()=>{E.join={};sheetShow(joinHTML(),'fin')});await f1.fill('#joincode',fixed.code);await f1.click('[data-joincheck]');await f1.waitForTimeout(1800);
+ await f1.click('[data-joinconfirm]');
+ await f1.waitForFunction(()=>E.mode==='family'&&E.role==='mom',null,{timeout:20000}).then(()=>ok(true,'새 코드로 엄마 폰 합류 → 엄마')).catch(()=>ok(false,'새 코드 합류 (errs: '+f1.__errs.join('|')+')'));
+ // 상대가 합류한 뒤에는 바꿀 수 없다
+ await e1.click('[data-tab="conf"]');await e1.waitForTimeout(1500);
+ ok(await e1.evaluate(()=>!document.querySelector('[data-famswitch]')),'상대가 합류한 뒤에는 역할 바꾸기 버튼이 사라짐');
+ const sw=await e1.evaluate(async()=>{const r=await switchFamilyRole();return r.err||'ok'});
+ ok(/이미 합류/.test(sw),'합류 뒤 강제로 시도해도 막힘: '+sw);
+ for(const x of [E1,F1])if(x.p.__errs.length)ok(false,'페이지 오류 '+x.p.__errs.join('|'));
+
  // ---- SDK 로드 실패: 쓰기 막고 안내 ----
  const D=await b.newContext({...devices['Pixel 7']});const d=await D.newPage();
  await d.addInitScript((f)=>{window.__FB_BASE='/__nofb/';localStorage.setItem('dpn_fam',JSON.stringify(f))},{fid:'x',role:'dad'});
