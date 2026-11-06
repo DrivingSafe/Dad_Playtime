@@ -5,6 +5,7 @@
   "scripts": {
     "build-sdk": "node build-sdk.js",
     "test": "firebase emulators:exec --config ../../firebase.json --only firestore --project dad-playtime-test \"node rules.test.js\"",
+    "test:split": "node build-sdk.js && firebase emulators:exec --config ../../firebase.json --only firestore,auth --project dad-playtime-test \"node ../split.js\"",
     "test:family": "node build-sdk.js && firebase emulators:exec --config ../../firebase.json --only firestore,auth --project dad-playtime-test \"node ../family.js\""
   },
   "devDependencies": {

@@ -25,6 +25,7 @@ jobs:
           mkdir _site
           cp index.html sw.js manifest.webmanifest _site/
           cp -r icons data _site/
+          cp dev-split.html _site/
           rm -f _site/data/who/*.csv
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v3

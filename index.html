@@ -373,6 +373,8 @@ nav button:has(.dot){position:relative}
 .codebox .code{font-family:var(--f-num);font-size:38px;letter-spacing:.14em;text-align:center;margin-top:4px}
 .errtxt{color:var(--bad);font-size:14px;margin:8px 0}
 .errcard{border-left:5px solid var(--bad)}
+#profbadge{position:fixed;left:6px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:25;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:99px;background:#6B4FA0;color:#fff;opacity:.9;pointer-events:none}
+#profbadge[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -392,6 +394,7 @@ nav button:has(.dot){position:relative}
   <button role="tab" data-tab="check"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg><span>발달 체크</span></button>
   <button role="tab" data-tab="grow"><svg viewBox="0 0 24 24"><path d="M4 19h16"/><path d="M6 16l4-5 3 3 5-7"/></svg><span>키·몸무게</span></button>
 </nav></div>
+<div id="profbadge" hidden></div>
 <div id="minibar" hidden><div class="mb-l"><span class="mb-ic">⏱</span><div class="mb-tx"><b class="mb-title"></b><small class="mb-sub"></small></div></div><span class="mb-time"></span><button class="mb-btn" data-mbend>끝내기</button></div>
 <div id="sheet" hidden></div>
 <div id="toast" hidden></div>
@@ -399,14 +402,18 @@ nav button:has(.dot){position:relative}
 <script>
 /* ---------- 개발자 모드 (?dev=1 로 켜고 ?dev=0 으로 끔): 기준 날짜를 옮겨 월령·일자별 화면을 확인 ----------
    Date 를 한 겹 씌워 앱 전체의 '오늘'이 같이 움직인다. 실제 기록과 섞이지 않게 저장소도 따로 쓴다(dpn_db_dev). */
+/* ---------- 테스트 프로필 (?profile=이름): 한 브라우저 안에서 폰 여러 대처럼 저장소·Firebase 로그인을 나눈다 (개발·테스트용) ---------- */
+const PROFILE=(location.search.match(/[?&]profile=([A-Za-z0-9_-]{1,12})/)||[])[1]||'';
+const PFX=PROFILE?'p_'+PROFILE+'_':'';
+const LS=PROFILE?{getItem:k=>window.localStorage.getItem(PFX+k),setItem:(k,v)=>window.localStorage.setItem(PFX+k,v),removeItem:k=>window.localStorage.removeItem(PFX+k)}:window.localStorage;
 const DEV={on:false,off:0,draft:true,view:'all'};
 try{
   const q=location.search.match(/[?&]dev=([01])/);
-  if(q){if(q[1]==='1'){localStorage.setItem('dpn_dev','1')}else{localStorage.removeItem('dpn_dev');localStorage.removeItem('dpn_dev_off')}}
-  DEV.on=localStorage.getItem('dpn_dev')==='1';
-  DEV.off=DEV.on?Number(localStorage.getItem('dpn_dev_off')||0):0;
-  DEV.draft=localStorage.getItem('dpn_dev_draft')!=='0';
-  DEV.view=localStorage.getItem('dpn_dev_view')||'all';
+  if(q){if(q[1]==='1'){LS.setItem('dpn_dev','1')}else{LS.removeItem('dpn_dev');LS.removeItem('dpn_dev_off')}}
+  DEV.on=LS.getItem('dpn_dev')==='1';
+  DEV.off=DEV.on?Number(LS.getItem('dpn_dev_off')||0):0;
+  DEV.draft=LS.getItem('dpn_dev_draft')!=='0';
+  DEV.view=LS.getItem('dpn_dev_view')||'all';
 }catch(e){}
 const RealDate=Date;
 if(DEV.on){window.Date=class extends RealDate{constructor(...a){a.length?super(...a):super(RealDate.now()+DEV.off)}static now(){return RealDate.now()+DEV.off}}}
@@ -643,7 +650,7 @@ const BK=['거의 못함','1~2번','3~4번','5번 이상'];
 const RX=['잘 따라함','보통','힘들어함'];
 
 /* ---------- 상태 ---------- */
-const VERSION='0.15.1';
+const VERSION='0.16';
 const DEF_BIRTH=(()=>{const d=new Date();d.setMonth(d.getMonth()-30);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const S={cfg:{name:'우리 아이',birth:DEF_BIRTH,sex:'',ck:''},ms:{},plays:[],log:[],body:[],growth:[],ref:{},assign:{},assignBook:{},assignTs:{},errands:[],memo:{},shelf:[],members:[],msgs:[],conf:{},fb:[]};
 const E={op:{},mk:null,gk:null,cbirth:'',role:null,srole:null,seen:0,sname:'',fbtext:'',fbfeat:'dad',db:null,uid:null,canWrite:true,tab:'dad',cfgSet:false,cardId:null,picked:false,mins:15,left:900,running:false,tick:null,pending:false,rx:null,bk:null,sbirth:'',ssex:'',gh:null,gw:null,gwarn:null,loaded:false};
@@ -678,7 +685,7 @@ async function markSeen(){
 }
 async function saveRole(role){
   E.role=role;
-  try{localStorage.setItem('role',role)}catch(e){}
+  try{LS.setItem('role',role)}catch(e){}
   if(E.db&&E.uid){try{await E.db.doc('data/users/'+E.uid+'/me').set({role,seen:E.seen})}catch(e){}}
 }
 function unread(){const o=E.role==='mom'?'dad':'mom';return S.msgs.filter(m=>m.from===o&&m.ts>E.seen).length}
@@ -708,6 +715,7 @@ const FEATS=[
   {id:'msg',t:'칭찬·채찍질 메시지'}
 ];
 const CHANGES=[
+  {v:'0.16',d:'2026-11-06',l:['테스트 프로필(?profile=이름): 한 브라우저에서 아빠 폰·엄마 폰처럼 저장소와 Firebase 로그인을 나눔','dev-split.html: 한 화면에 두 폰을 나란히 띄워 가족 연결·동기화를 PC에서 시험']},
   {v:'0.15.1',d:'2026-11-06',l:['가족을 만든 사람이 역할(아빠/엄마)을 잘못 골랐을 때, 상대가 합류하기 전이면 의견 탭에서 역할을 바꾸고 새 초대 코드를 받을 수 있어요']},
   {v:'0.15',d:'2026-11-06',l:['엄마·아빠 폰 연결(Firebase): 초대 코드로 합류, 같은 기록을 실시간으로 공유','연결 시 동의 화면, 연결 해제·가족 기록 삭제, 한 역할에 한 명·1회용 초대(보안 규칙 에뮬레이터 검증)','연결하기 전에는 지금처럼 이 기기에만 저장']},
   {v:'0.14',d:'2026-11-06',l:['심부름 탭: 엄마가 "커피 사와" 같은 부탁을 적고 아빠가 체크, 아빠 오늘 화면에도 표시','엄마 전달 메모(아이 상태)가 아빠 화면 맨 위에','책: 카테고리별 읽는 법과 확인된 추천 책, 우리집 책장 등록, 책장 책부터 오늘의 도서','기록 백업(내보내기·불러오기), 홈 화면 설치 안내, 연속 일수']},
@@ -911,9 +919,9 @@ function itemsFold(c){
 const BRX=['흥미 있게 끝까지 봤어요','조금 보다 말았어요','관심이 적었어요'];
 const KINDN={play:'놀이',book:'도서',tool:'도구 놀이'};
 const PK_KEY='dpn_pick',TM_KEY='dpn_timer';
-function pickLoad(){try{const o=JSON.parse(localStorage.getItem(PK_KEY)||'{}');return o.date===today()?o:{date:today()}}catch(e){return{date:today()}}}
+function pickLoad(){try{const o=JSON.parse(LS.getItem(PK_KEY)||'{}');return o.date===today()?o:{date:today()}}catch(e){return{date:today()}}}
 let PICK=pickLoad();
-function pickSave(){try{localStorage.setItem(PK_KEY,JSON.stringify(PICK))}catch(e){}}
+function pickSave(){try{LS.setItem(PK_KEY,JSON.stringify(PICK))}catch(e){}}
 const toolById=id=>(TOOLS.tools||[]).find(t=>t.id===id);
 const itemList=kind=>kind==='play'?ranked():bookPool();
 const itemTitle=(kind,id)=>{if(kind==='play'){const c=cardById(id);return c?c.t:''}if(kind==='book'){const b=bookById(id);return b?b.name:''}const t=toolById(id);return t?t.name:''};
@@ -1046,7 +1054,7 @@ async function saveMemo(){
 const BK_KEYS=['role','dpn_pick','dpn_day','dpn_act','dpn_goal','dpn_ck','dpn_dev','dpn_dev_off','dpn_dev_view','dpn_dev_draft'];
 function exportData(){
   const keys={};
-  try{[DEV.on?'dpn_db_dev':'dpn_db',...BK_KEYS].forEach(k=>{const v=localStorage.getItem(k);if(v!=null)keys[k]=v})}catch(e){}
+  try{[DEV.on?'dpn_db_dev':'dpn_db',...BK_KEYS].forEach(k=>{const v=LS.getItem(k);if(v!=null)keys[k]=v})}catch(e){}
   const blob=new Blob([JSON.stringify({app:'15min-play-notebook',v:1,saved:new Date().toISOString(),keys})],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='놀이수첩-백업-'+today()+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
   toast('백업 파일을 저장했어요.');
@@ -1057,7 +1065,7 @@ function importData(file){
     try{
       const o=JSON.parse(rd.result);if(!o||o.app!=='15min-play-notebook'||!o.keys)throw new Error('형식');
       if(!confirm('이 기기의 기록을 백업 파일 내용으로 바꿔요. 계속할까요?'))return;
-      Object.keys(o.keys).forEach(k=>{if(k==='dpn_db'||k==='dpn_db_dev'||BK_KEYS.includes(k))localStorage.setItem(k,o.keys[k])});
+      Object.keys(o.keys).forEach(k=>{if(k==='dpn_db'||k==='dpn_db_dev'||BK_KEYS.includes(k))LS.setItem(k,o.keys[k])});
       toast('불러왔어요. 다시 시작해요.');setTimeout(()=>location.reload(),600);
     }catch(e){toast('백업 파일이 아니에요.')}
   };
@@ -1110,8 +1118,8 @@ const pickBtn=(kind,id,curId)=>id===curId?'<span class="pickbtn picked">선택�
    완료하면 다음 추천이 나오고, 하루가 끝나면 오늘 완료한 것을 한 번에 엄마에게 보고한다.
    끝나는 시각과 진행 중인 놀이를 저장하므로 새로고침해도 이어진다. */
 const DAY_KEY='dpn_day',ACT_KEY='dpn_act',GOAL_KEY='dpn_goal';
-function lsGet(k,d){try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}}
-function lsSet(k,v){try{if(v==null)localStorage.removeItem(k);else localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+function lsGet(k,d){try{const v=JSON.parse(LS.getItem(k));return v==null?d:v}catch(e){return d}}
+function lsSet(k,v){try{if(v==null)LS.removeItem(k);else LS.setItem(k,JSON.stringify(v))}catch(e){}}
 let GOAL=lsGet(GOAL_KEY,15);
 const newDay=()=>({date:today(),goal:GOAL,start:0,end:0,state:'idle',lastReport:0,goalShown:false});
 let DAY=(()=>{const o=lsGet(DAY_KEY,null);return o&&o.date===today()?o:newDay()})();
@@ -1300,8 +1308,8 @@ function missionCard(kind){
 }
 
 /* ---------- 발달 체크인: 요즘 이걸 잘 하나요? (3주 넘게 안 물어본 항목을 하루 최대 3개) ---------- */
-function ckLoad(){try{const o=JSON.parse(localStorage.getItem('dpn_ck')||'{}');return o.date===today()?o:{date:today(),n:0,skip:false}}catch(e){return{date:today(),n:0,skip:false}}}
-function ckSave(o){try{localStorage.setItem('dpn_ck',JSON.stringify(o))}catch(e){}}
+function ckLoad(){try{const o=JSON.parse(LS.getItem('dpn_ck')||'{}');return o.date===today()?o:{date:today(),n:0,skip:false}}catch(e){return{date:today(),n:0,skip:false}}}
+function ckSave(o){try{LS.setItem('dpn_ck',JSON.stringify(o))}catch(e){}}
 function ckCandidate(){const now=Date.now(),c=MS.filter(m=>{const r=S.ms[m.id];return !r||!r.at||now-r.at>21*864e5});return c.length?c[dayNum()%c.length]:null}
 function checkinCard(){
   if(!E.cfgSet)return '';
@@ -1806,7 +1814,7 @@ window.addEventListener('hashchange',()=>{fromHash();render()});
 
 /* ---------- 개발자 패널 ---------- */
 const DOW=['일','월','화','수','목','금','토'];
-function devSetDate(d){DEV.off=new RealDate(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0).getTime()-RealDate.now();try{localStorage.setItem('dpn_dev_off',String(DEV.off))}catch(e){}E.picked=false;render()}
+function devSetDate(d){DEV.off=new RealDate(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0).getTime()-RealDate.now();try{LS.setItem('dpn_dev_off',String(DEV.off))}catch(e){}E.picked=false;render()}
 function devShift(unit,n){const d=new Date();if(unit==='d')d.setDate(d.getDate()+n);else d.setMonth(d.getMonth()+n);devSetDate(d)}
 function devAge(mo,day){const b=pdate(S.cfg.birth);const d=new Date(b.getFullYear(),b.getMonth()+mo,b.getDate()+day);devSetDate(d)}
 function devHTML(){
@@ -1841,8 +1849,8 @@ function devHTML(){
   return h;
 }
 function devSetView(v){
-  DEV.view=v;try{localStorage.setItem('dpn_dev_view',v)}catch(x){}
-  if(v!=='all')E.role=v;else{try{const r=localStorage.getItem('role');E.role=(r==='dad'||r==='mom')?r:'dad'}catch(x){E.role='dad'}}
+  DEV.view=v;try{LS.setItem('dpn_dev_view',v)}catch(x){}
+  if(v!=='all')E.role=v;else{try{const r=LS.getItem('role');E.role=(r==='dad'||r==='mom')?r:'dad'}catch(x){E.role='dad'}}
   E.picked=false;render();
 }
 function devUpdate(){
@@ -1859,11 +1867,11 @@ function devUpdate(){
       if(t.id==='devtog'){E.devOpen=!E.devOpen;devUpdate();return}
       if(t.dataset.dshift){const [u,n]=t.dataset.dshift.split(':');devShift(u,Number(n))}
       else if(t.dataset.dview){devSetView(t.dataset.dview)}
-      else if('ddraft' in t.dataset){DEV.draft=!DEV.draft;try{localStorage.setItem('dpn_dev_draft',DEV.draft?'1':'0')}catch(x){}E.picked=false;render()}
+      else if('ddraft' in t.dataset){DEV.draft=!DEV.draft;try{LS.setItem('dpn_dev_draft',DEV.draft?'1':'0')}catch(x){}E.picked=false;render()}
       else if('dreset' in t.dataset){devSetDate(new Date(RealDate.now()))}
       else if('ddate' in t.dataset){const v=document.getElementById('devdate').value;if(v)devSetDate(pdate(v))}
       else if('dage' in t.dataset){devAge(Number(document.getElementById('devmo').value||0),Number(document.getElementById('devday').value||0))}
-      else if('doff' in t.dataset){try{localStorage.removeItem('dpn_dev');localStorage.removeItem('dpn_dev_off')}catch(x){}location.href=location.pathname+'?dev=0'}
+      else if('doff' in t.dataset){try{LS.removeItem('dpn_dev');LS.removeItem('dpn_dev_off')}catch(x){}location.href=location.pathname+'?'+(PROFILE?'profile='+PROFILE+'&':'')+'dev=0'}
     });
   }
   const tog=document.getElementById('devtog');tog.classList.toggle('shifted',!!DEV.off);
@@ -1872,8 +1880,8 @@ function devUpdate(){
 }
 function devToggleFromUI(on){
   try{
-    if(on){localStorage.setItem('dpn_dev','1');if(!localStorage.getItem('dpn_db_dev')&&localStorage.getItem('dpn_db'))localStorage.setItem('dpn_db_dev',localStorage.getItem('dpn_db'))}
-    else{localStorage.removeItem('dpn_dev');localStorage.removeItem('dpn_dev_off')}
+    if(on){LS.setItem('dpn_dev','1');if(!LS.getItem('dpn_db_dev')&&LS.getItem('dpn_db'))LS.setItem('dpn_db_dev',LS.getItem('dpn_db'))}
+    else{LS.removeItem('dpn_dev');LS.removeItem('dpn_dev_off')}
   }catch(e){}
   location.reload();
 }
@@ -1885,11 +1893,11 @@ function devToggleFromUI(on){
 function localBackend(){
   const KEY=DEV.on?'dpn_db_dev':'dpn_db',subs=new Set();
   let store={};
-  const load=()=>{try{store=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){store={}}};
-  const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){throw Object.assign(new Error('storage'),{code:'storage'})}};
+  const load=()=>{try{store=JSON.parse(LS.getItem(KEY)||'{}')}catch(e){store={}}};
+  const save=()=>{try{LS.setItem(KEY,JSON.stringify(store))}catch(e){throw Object.assign(new Error('storage'),{code:'storage'})}};
   const fire=()=>subs.forEach(f=>f());
   E.local=true;load();
-  window.addEventListener('storage',e=>{if(e.key===KEY){load();fire()}});
+  window.addEventListener('storage',e=>{if(e.key===PFX+KEY){load();fire()}});
   const snapDoc=p=>({exists:p in store,id:p.split('/').pop(),data:()=>store[p]});
   const doc=p=>({
     set:async d=>{store[p]=JSON.parse(JSON.stringify(d));save();fire()},
@@ -1933,7 +1941,7 @@ async function fbLoad(){
   if(FB)return FB;
   const b=FB_BASE();
   const [app,auth,fs]=await Promise.all([import(b+'firebase-app.js'),import(b+'firebase-auth.js'),import(b+'firebase-firestore.js')]);
-  const a=app.initializeApp(FB_CFG),au=auth.getAuth(a);
+  const a=app.initializeApp(FB_CFG,PROFILE?'p-'+PROFILE:undefined),au=auth.getAuth(a);
   let db;try{db=fs.initializeFirestore(a,{localCache:fs.persistentLocalCache()})}catch(e){db=fs.getFirestore(a)}
   FB={app:a,auth:au,db,A:auth,F:fs};return FB;
 }
@@ -1987,7 +1995,7 @@ async function getBackend(){
 /* ---------- 가족 만들기 / 합류 / 해제 / 삭제 ---------- */
 async function migrateLocal(fid){
   const {db,F}=await fbLoad();let store={};
-  try{store=JSON.parse(localStorage.getItem(DEV.on?'dpn_db_dev':'dpn_db')||'{}')}catch(e){}
+  try{store=JSON.parse(LS.getItem(DEV.on?'dpn_db_dev':'dpn_db')||'{}')}catch(e){}
   const paths=Object.keys(store).filter(k=>!k.startsWith('ref/')&&!k.startsWith('data/users/')&&k.split('/').length===2);
   for(let i=0;i<paths.length;i+=400){
     const b=F.writeBatch(db);paths.slice(i,i+400).forEach(k=>b.set(F.doc(db,`families/${fid}/${k}`),store[k]));await b.commit();
@@ -2007,7 +2015,7 @@ async function createFamily(){
   await b.commit();
   await migrateLocal(fid);
   lsSet(FAM_KEY,{fid,role,code,codeExp:exp});
-  try{localStorage.setItem('role',role)}catch(e){}
+  try{LS.setItem('role',role)}catch(e){}
 }
 async function joinCheck(code){
   code=String(code||'').trim().toUpperCase();
@@ -2031,7 +2039,7 @@ async function joinFamily(code,inv){
   b.update(F.doc(db,'invites/'+code),{usedBy:uid,usedAt:now});
   b.set(F.doc(db,'users/'+uid),{familyId:fid,role});
   try{await b.commit()}catch(e){return{err:'합류하지 못했어요. 이미 엄마·아빠가 모두 연결된 가족이거나 코드가 막 사용됐을 수 있어요.'}}
-  lsSet(FAM_KEY,{fid,role});try{localStorage.setItem('role',role)}catch(e){}
+  lsSet(FAM_KEY,{fid,role});try{LS.setItem('role',role)}catch(e){}
   return{ok:true,role};
 }
 async function newInvite(){
@@ -2062,7 +2070,7 @@ async function switchFamilyRole(){
   b2.set(F.doc(db,'users/'+uid),{familyId:fam.fid,role:nr});
   let ok=false;for(let i=0;i<2&&!ok;i++){try{await b2.commit();ok=true}catch(e){await new Promise(r=>setTimeout(r,800))}}
   if(!ok)return{err:'역할을 바꾸는 중 연결이 끊겼어요. 의견 탭에서 이 폰 연결을 해제한 뒤 다시 시작해 주세요.'};
-  lsSet(FAM_KEY,{fid:fam.fid,role:nr,code,codeExp:exp});try{localStorage.setItem('role',nr)}catch(e){}
+  lsSet(FAM_KEY,{fid:fam.fid,role:nr,code,codeExp:exp});try{LS.setItem('role',nr)}catch(e){}
   return{ok:true};
 }
 async function leaveFamily(){
@@ -2145,6 +2153,7 @@ if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)&&typeof clau
 /* ---------- 시작 ---------- */
 (async function init(){
   fromHash();render();loadTools();loadBooks();
+  if(PROFILE){const pb=document.getElementById('profbadge');pb.textContent='🧪 테스트 프로필 · '+PROFILE;pb.hidden=false}
   const jm=location.search.match(/[?&]join=([A-Za-z0-9]{6})/);
   {let n=0,t0=0;const tap=()=>{const now=Date.now();if(now-t0>3000)n=0;t0=now;n++;if(n>=7){n=0;if(E.local)devToggleFromUI(!DEV.on)}};['who','age'].forEach(id=>{const el=document.getElementById(id);el.addEventListener('click',tap);el.addEventListener('contextmenu',e=>e.preventDefault());el.addEventListener('selectstart',e=>e.preventDefault())})}
   document.getElementById('sheet').addEventListener('click',sheetClick);
@@ -2155,11 +2164,11 @@ if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)&&typeof clau
   if(dayActive()||ACT){ensureTick();if(DAY.state==='running'&&Date.now()>=DAY.end){DAY.state='over';DAY.goalShown=true;daySave();paintBar();openGoalSheet()}else if(DAY.state==='over'&&!DAY.goalShown){DAY.goalShown=true;daySave();openGoalSheet()}else wakeOn()}
   const {db,user}=await getBackend();
   if(!db){render();return}
-  if(jm&&E.mode==='local'){try{history.replaceState(null,'',location.pathname+location.hash)}catch(e){}setTimeout(()=>openConsent('join',jm[1].toUpperCase()),400)}
+  if(jm&&E.mode==='local'){try{history.replaceState(null,'',location.pathname+(PROFILE?'?profile='+PROFILE:'')+location.hash)}catch(e){}setTimeout(()=>openConsent('join',jm[1].toUpperCase()),400)}
   E.db=db;
   try{const w=user?await user.can('data.write'):null;if(w===false)E.canWrite=false}catch(e){}
   try{E.uid=user?await user.id():null}catch(e){}
-  try{const r=localStorage.getItem('role');if(r==='dad'||r==='mom')E.role=r}catch(e){}
+  try{const r=LS.getItem('role');if(r==='dad'||r==='mom')E.role=r}catch(e){}
   if(E.uid){
     try{const me=await db.doc('data/users/'+E.uid+'/me').get();if(me.exists){const d=me.data();if(d.role==='dad'||d.role==='mom')E.role=d.role;if(d.seen)E.seen=d.seen}}catch(e){}
   }

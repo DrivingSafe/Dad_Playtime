@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>두 폰 나란히 테스트</title>
+<style>
+:root{--bg:#EEF2EF;--ink:#1C2825;--ink2:#62716B;--pri:#2B7A66;--line:#D5DDD8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;line-height:1.5}
+header{padding:16px 20px;max-width:980px;margin:0 auto}
+h1{margin:0 0 6px;font-size:20px}
+p{margin:4px 0;font-size:14px;color:var(--ink2)}
+ol{margin:8px 0 0;padding-left:20px;font-size:14px;color:var(--ink2)}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button{font:inherit;font-size:13px;font-weight:700;border:0;border-radius:99px;padding:8px 14px;background:var(--pri);color:#fff;cursor:pointer}
+button.g{background:#fff;color:var(--ink);border:1px solid var(--line)}
+main{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;padding:8px 20px 40px}
+.ph{width:var(--w,390px)}
+.ph-h{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ph-h b{font-size:16px}.ph-h span{font-size:12px;color:var(--ink2);flex:1}
+.ph-h button{padding:5px 10px;font-size:12px}
+iframe{width:100%;height:var(--h,780px);border:10px solid #22303A;border-radius:34px;background:#fff;display:block}
+.warn{background:#FFF4D6;border:1px solid #E4C566;border-radius:12px;padding:10px 14px;font-size:13px;margin-top:10px;color:#4a3b00}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧪 두 폰 나란히 테스트</h1>
+  <p>한 화면에서 <b>아빠 폰</b>과 <b>엄마 폰</b>을 동시에 시험해요. 두 창은 서로 다른 폰처럼 <b>저장소와 Firebase 로그인이 따로</b>예요 (같은 Firebase 프로젝트를 써요).</p>
+  <ol>
+    <li>왼쪽 아빠 폰: 처음 설정 → <b>아빠</b> 선택 → 의견 탭 → "새로 시작하기" → 6자리 코드</li>
+    <li>오른쪽 엄마 폰: 처음 설정 화면의 <b>"이미 가족이 시작했어요 · 초대 코드로 합류"</b> → 코드 입력</li>
+    <li>엄마 폰에서 심부름·메모를 적으면 아빠 폰에 바로 뜨는지, 아빠가 체크·보고하면 엄마 폰에 보이는지 확인</li>
+  </ol>
+  <div class="bar">
+    <button id="rall">둘 다 새로고침</button>
+    <button class="g" id="xall">모두 초기화 (새 폰 둘로 시작)</button>
+    <button class="g" id="sz">작은 폰 크기(360×700)</button>
+  </div>
+  <div class="warn">테스트로 만든 가족은 실제 Firebase에 저장돼요. 끝나면 아빠 폰 의견 탭 → <b>"가족 기록 모두 삭제"</b>를 눌러 지워 주세요. "초기화"를 누르면 그 폰은 새로운 익명 사용자가 돼서 이전 가족에 다시 못 들어가요.</div>
+</header>
+<main>
+  <section class="ph"><div class="ph-h"><b>👨 아빠 폰</b><span>profile=dad</span><button class="g" data-r="dad">새로고침</button><button class="g" data-x="dad">초기화</button></div><iframe id="f-dad" allow="clipboard-write" src="index.html?profile=dad"></iframe></section>
+  <section class="ph"><div class="ph-h"><b>👩 엄마 폰</b><span>profile=mom</span><button class="g" data-r="mom">새로고침</button><button class="g" data-x="mom">초기화</button></div><iframe id="f-mom" allow="clipboard-write" src="index.html?profile=mom"></iframe></section>
+</main>
+<script>
+const PROFS=['dad','mom'];
+const frame=p=>document.getElementById('f-'+p);
+const url=p=>'index.html?profile='+p;
+function reload(p){frame(p).src=url(p)}
+/* 한 폰의 저장 데이터(localStorage 접두어, Firebase 로그인, Firestore 캐시)를 지운다 */
+async function wipe(p){
+  frame(p).src='about:blank';await new Promise(r=>setTimeout(r,400));
+  Object.keys(localStorage).filter(k=>k.startsWith('p_'+p+'_')).forEach(k=>localStorage.removeItem(k));
+  try{
+    const dbs=(indexedDB.databases?await indexedDB.databases():[]);
+    for(const d of dbs){
+      if(d.name&&d.name.includes('/p-'+p+'/'))await new Promise(r=>{const q=indexedDB.deleteDatabase(d.name);q.onsuccess=q.onerror=q.onblocked=()=>r()});
+    }
+    await new Promise(res=>{ // Firebase 로그인 정보(이 폰 이름의 항목만)
+      const q=indexedDB.open('firebaseLocalStorageDb');
+      q.onerror=()=>res();
+      q.onsuccess=()=>{const db=q.result;try{const tx=db.transaction('firebaseLocalStorage','readwrite'),st=tx.objectStore('firebaseLocalStorage'),all=st.getAllKeys();all.onsuccess=()=>{all.result.filter(k=>String(k).endsWith(':p-'+p)).forEach(k=>st.delete(k))};tx.oncomplete=()=>{db.close();res()};tx.onerror=()=>{db.close();res()}}catch(e){db.close();res()}};
+      q.onupgradeneeded=()=>{};
+    });
+  }catch(e){}
+  reload(p);
+}
+document.querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>reload(b.dataset.r));
+document.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{if(confirm((b.dataset.x==='dad'?'아빠':'엄마')+' 폰을 초기화할까요? 이 폰에 저장된 기록과 Firebase 로그인이 지워져요.'))wipe(b.dataset.x)});
+document.getElementById('rall').onclick=()=>PROFS.forEach(reload);
+document.getElementById('xall').onclick=()=>{if(confirm('두 폰을 모두 초기화할까요?'))PROFS.forEach(wipe)};
+let small=false;document.getElementById('sz').onclick=e=>{small=!small;document.documentElement.style.setProperty('--w',small?'360px':'390px');document.documentElement.style.setProperty('--h',small?'700px':'780px');e.target.textContent=small?'기본 폰 크기(390×780)':'작은 폰 크기(360×700)'};
+</script>
+</body>
+</html>
