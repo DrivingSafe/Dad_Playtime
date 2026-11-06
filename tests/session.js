@@ -45,21 +45,22 @@ const W=ms=>new Promise(r=>setTimeout(r,ms));
  const bar=await p.evaluate(()=>{const r=document.getElementById('minibar').getBoundingClientRect();return{top:r.top,h:r.height}});ok(bar.top===0&&bar.h<70,'바는 맨 위에 작게 고정 (높이 '+Math.round(bar.h)+'px)');
 
  // ---- 새로고침해도 카운트·진행 중인 놀이 유지 ----
- const endBefore=await p.evaluate(()=>DAY.end);
+ const startBefore=await p.evaluate(()=>ACT.start);
  await p.reload();await p.waitForTimeout(1200);
- ok(await p.evaluate(e=>!!ACT&&DAY.end===e&&DAY.state==='running',endBefore),'새로고침 후에도 같은 끝나는 시각, 진행 중인 놀이 유지');
+ ok(await p.evaluate(e=>!!ACT&&ACT.start===e&&DAY.state==='running',startBefore),'새로고침 후에도 같은 시작 시각, 진행 중인 놀이 유지');
  ok(await T('#card-play .order')===browsed,'시작한 놀이가 새로고침 후에도 메인');
  await p.waitForTimeout(1500);ok(await p.evaluate(()=>dayRemain())<=1798,'새로고침 중에도 시간이 흘렀음');
+ await p.evaluate(()=>{ACT.start-=(DAY.goal*60-2)*1000;actSave();ensureTick()});
 
  // ---- 목표 시간 끝: 알람 → 놀이 마무리 / 5분 더 ----
- await p.evaluate(()=>{DAY.end=Date.now()+1200;daySave()});await p.waitForTimeout(3000);
+ await p.waitForTimeout(3500);
  ok(await p.evaluate(()=>DAY.state==='over'),'목표 시간이 되면 달성 상태');
  ok(await p.evaluate(()=>(window.__vib||[]).length>0),'알람: 진동 울림');
  ok(await p.evaluate(()=>!document.getElementById('sheet').hidden&&/목표 시간이 됐어요/.test(document.querySelector('#sheet h2').textContent)),'목표 시간 안내 시트');
  ok(await p.evaluate(()=>!!document.querySelector('[data-fin="complete"]')&&!!document.querySelector('[data-fin="ext5"]')),'놀이 완료하기 / 5분 더 하기 선택');
  ok(await p.evaluate(()=>document.getElementById('minibar').classList.contains('done')&&/\+\d\d:\d\d/.test(document.querySelector('#minibar .mb-time').textContent)),'바: 목표 달성, 초과 시간(+mm:ss) 표시');
  await p.click('[data-fin="ext5"]');await p.waitForTimeout(400);
- ok(await p.evaluate(()=>DAY.state==='running'&&dayRemain()>250&&dayRemain()<=300&&document.getElementById('sheet').hidden),'5분 더 하기 → 다시 카운트다운');
+ ok(await p.evaluate(()=>DAY.state==='running'&&dayRemain()>250&&dayRemain()<=302&&document.getElementById('sheet').hidden),'5분 더 하기 → 다시 카운트다운');
 
  // ---- 놀이 완료 → 다음 추천 → 또 골라서 하기 ----
  await p.click('#minibar [data-mbend]');await p.waitForTimeout(300);
@@ -69,7 +70,8 @@ const W=ms=>new Promise(r=>setTimeout(r,ms));
  await p.click('[data-frx="0"]');await p.click('[data-fbk="3"]');await p.click('[data-fin="done"]');await p.waitForTimeout(600);
  const rec=await p.evaluate(()=>S.plays[0]);
  ok(rec.kind==='play'&&rec.r===0&&rec.b===3&&rec.mins>=1&&rec.t===browsed,'놀이 기록(kind=play, 실제 한 시간, 반응·횟수)');
- ok(await p.evaluate(()=>ACT===null&&DAY.state==='running'),'놀이만 끝나고 오늘 카운트는 계속');
+ ok(await p.evaluate(()=>ACT===null&&DAY.state==='running'),'놀이만 끝나고 하루 세션은 유지');
+ { const a1=await p.evaluate(()=>dayElapsed());await p.waitForTimeout(2200);const a2=await p.evaluate(()=>dayElapsed());ok(a1===a2&&a1>0,'완료하면 시간 적립이 멈춤 ('+a1+'초 유지)');}
  ok(await p.evaluate(()=>/고생했어요/.test(document.querySelector('#sheet h2').textContent)&&!!document.querySelector('[data-fin="next"]')&&!!document.querySelector('[data-fin="report"]')),'다음 놀이 고르기 / 여기까지 보고하기');
  await p.click('[data-fin="next"]');await p.waitForTimeout(700);
  const nextTitle=await T('#card-play .order');ok(nextTitle!==browsed,'완료하면 다음 추천 놀이가 나옴 ('+nextTitle+')');
@@ -99,7 +101,7 @@ const W=ms=>new Promise(r=>setTimeout(r,ms));
  await p.evaluate(()=>{ACT=null;actSave();sheetHide();render()});await p.waitForTimeout(300);
  await p.click('[data-report]');await p.waitForTimeout(300);
  const prev=await T('#sheet .repbox');
- ok(/오늘 놀이 \d+분 \(목표 30분\) · 3개 완료/.test(prev)&&/놀이 ·/.test(prev)&&/도서 ·/.test(prev),'보고 미리보기: 총 시간·목표·완료 개수, 놀이/도서 목록 ('+prev.split('\n')[0]+')');
+ ok(/오늘 놀이 \d+분 \(목표 35분\) · 3개 완료/.test(prev)&&/놀이 ·/.test(prev)&&/도서 ·/.test(prev),'보고 미리보기: 총 시간·목표·완료 개수, 놀이/도서 목록 ('+prev.split('\n')[0]+')');
  ok(/잘 따라함/.test(prev)&&/흥미 있게 끝까지 봤어요/.test(prev),'미리보기에 놀이 반응·도서 흥미가 각각 들어감');
  await p.click('[data-fin="send"]');await p.waitForTimeout(700);
  const rmsgs=await p.evaluate(()=>S.msgs.filter(m=>m.kind==='report'));
@@ -192,6 +194,29 @@ const W=ms=>new Promise(r=>setTimeout(r,ms));
  ok(await p.evaluate(()=>E.role==='mom'&&!!document.querySelector('[data-tab="mom"]')&&document.querySelector('[data-tab="dad"]').hidden),'헤더 전환으로 엄마 화면 보기');
  await p.click('[data-dv="all"]');await p.waitForTimeout(1100);
  ok(await p.evaluate(()=>[...document.querySelectorAll('nav button')].filter(b=>!b.hidden).length===5),'전체 보기: 탭 5개');
+ // ---- 스톱워치: 목표 없이 시작 → 위로 증가, 완료하면 멈춤, 이어서 쌓임, 모아서 보고 ----
+ { const ctx2=await b.newContext({...devices['Pixel 7']});const q=await ctx2.newPage();q.on('dialog',d=>d.accept());await q.goto(url);await q.waitForTimeout(900);
+   await q.click('[data-ssex="f"]');await q.click('[data-srole="dad"]');await q.click('#ssave');await q.waitForTimeout(800);
+   ok(await q.evaluate(()=>[...document.querySelectorAll('[data-goal]')].map(b=>b.dataset.goal).join()==='15,30,45,60,0'),'목표 선택: 15·30·45·60분·스톱워치');
+   await q.click('[data-goal="0"]');await q.waitForTimeout(200);
+   ok(await q.evaluate(()=>/스톱워치/.test(document.querySelector('[data-start="play"]').textContent)),'스톱워치 선택 → 시작 버튼에 반영');
+   await q.click('[data-start="play"]');await q.waitForTimeout(400);
+   ok(await q.evaluate(()=>!!ACT&&DAY.goal===0&&DAY.state==='running'),'시작 → 바로 스톱워치 시작');
+   await q.evaluate(()=>{ACT.start-=125*1000;actSave()});await q.waitForTimeout(1300);
+   ok(await q.evaluate(()=>/^0?2:0[5-9]$|^02:1\d$/.test(document.querySelector('#minibar .mb-time').textContent.trim())&&!/\+/.test(document.querySelector('#minibar .mb-time').textContent)),'바: 위로 증가하는 시간 (02:0x)');
+   await q.click('#minibar [data-mbend]');await q.waitForTimeout(300);await q.click('[data-fin="done"]');await q.waitForTimeout(500);
+   const e1=await q.evaluate(()=>dayElapsed());await q.waitForTimeout(2200);
+   ok(e1>=125&&await q.evaluate(()=>dayElapsed())===e1,'완료 → 적립 멈춤 ('+e1+'초)');
+   ok(await q.evaluate(()=>!document.getElementById('sheet').hidden&&/멈춰/.test(document.getElementById('sheet').textContent)),'완료 안내: 시간이 멈춰 있음');
+   await q.click('[data-fin="next"]');await q.waitForTimeout(500);
+   await q.click('[data-start="play"]');await q.waitForTimeout(300);
+   await q.evaluate(()=>{ACT.start-=60*1000;actSave()});await q.waitForTimeout(1200);
+   ok(await q.evaluate(e=>dayElapsed()>=e+60,e1),'다음 놀이 시작 → 이어서 쌓임');
+   await q.click('#minibar [data-mbend]');await q.waitForTimeout(300);await q.click('[data-fin="done"]');await q.waitForTimeout(500);
+   await q.click('[data-fin="report"]');await q.waitForTimeout(300);
+   const rp=await q.evaluate(()=>document.querySelector('.repbox').textContent);
+   ok(/오늘 놀이 \d+분 · 2개 완료/.test(rp)&&!/목표/.test(rp),'보고: 쌓은 시간·활동 2개 (목표 문구 없음) — '+rp.split('\n')[0]);
+   await q.close();}
  ok(!errs.length,'페이지 오류 없음 '+errs);
  await b.close();srv.close();process.exit(fails?1:0);
 })();
