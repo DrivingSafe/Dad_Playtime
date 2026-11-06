@@ -213,6 +213,19 @@ nav button{min-height:52px}
 summary{min-height:44px;display:flex;align-items:center}
 .wheel{touch-action:pan-y}
 @media (max-width:360px){.age{font-size:26px}.order{font-size:26px}.timer{font-size:52px}}
+
+/* ===== v0.8 스크롤 여백·개발자 패널 ===== */
+.hero .q,#ssave{scroll-margin-top:16px;scroll-margin-bottom:120px}
+#dev{position:fixed;right:10px;bottom:calc(78px + env(safe-area-inset-bottom,0px));z-index:30}
+#devtog{font:inherit;font-size:12px;font-weight:700;width:46px;height:46px;border-radius:50%;border:0;background:#22303A;color:#fff;box-shadow:0 2px 10px rgba(0,0,0,.3);opacity:.9}
+#devtog.shifted{background:#D9822B}
+#devbody{position:fixed;left:10px;right:10px;bottom:calc(132px + env(safe-area-inset-bottom,0px));max-height:62vh;overflow:auto;background:var(--card);color:var(--ink);border-radius:18px;box-shadow:0 8px 30px rgba(0,0,0,.28);padding:14px;font-size:13px;-webkit-overflow-scrolling:touch}
+#devbody[hidden]{display:none}
+.dv-grid{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0}
+.dv-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.dv-row input{font:inherit;font-size:16px;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0}
+.dv-t{width:100%;border-collapse:collapse;font-size:12.5px}
+.dv-t td{padding:4px 6px;border-top:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -234,6 +247,17 @@ summary{min-height:44px;display:flex;align-items:center}
 <div id="toast" hidden></div>
 
 <script>
+/* ---------- 개발자 모드 (?dev=1 로 켜고 ?dev=0 으로 끔): 기준 날짜를 옮겨 월령·일자별 화면을 확인 ----------
+   Date 를 한 겹 씌워 앱 전체의 '오늘'이 같이 움직인다. 실제 기록과 섞이지 않게 저장소도 따로 쓴다(dpn_db_dev). */
+const DEV={on:false,off:0};
+try{
+  const q=location.search.match(/[?&]dev=([01])/);
+  if(q){if(q[1]==='1'){localStorage.setItem('dpn_dev','1')}else{localStorage.removeItem('dpn_dev');localStorage.removeItem('dpn_dev_off')}}
+  DEV.on=localStorage.getItem('dpn_dev')==='1';
+  DEV.off=DEV.on?Number(localStorage.getItem('dpn_dev_off')||0):0;
+}catch(e){}
+const RealDate=Date;
+if(DEV.on){window.Date=class extends RealDate{constructor(...a){a.length?super(...a):super(RealDate.now()+DEV.off)}static now(){return RealDate.now()+DEV.off}}}
 /* ---------- 기준 데이터: CDC "Learn the Signs. Act Early." 30개월 / 3세 이정표 (2026-05 개정본) ---------- */
 const DOM = {soc:{n:'사회·정서',c:'c-soc'},lang:{n:'언어·의사소통',c:'c-lang'},cog:{n:'인지',c:'c-cog'},mov:{n:'신체·운동',c:'c-mov'}};
 const MS = [
@@ -372,7 +396,7 @@ const BK=['거의 못함','1~2번','3~4번','5번 이상'];
 const RX=['잘 따라함','보통','힘들어함'];
 
 /* ---------- 상태 ---------- */
-const VERSION='0.7';
+const VERSION='0.8';
 const DEF_BIRTH=(()=>{const d=new Date();d.setMonth(d.getMonth()-30);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const S={cfg:{name:'우리 아이',birth:DEF_BIRTH,sex:'',ck:''},ms:{},plays:[],log:[],body:[],growth:[],ref:{},assign:{},msgs:[],conf:{},fb:[]};
 const E={op:{},mk:null,gk:null,cbirth:'',role:null,srole:null,seen:0,sname:'',fbtext:'',fbfeat:'dad',db:null,uid:null,canWrite:true,tab:'dad',cfgSet:false,cardId:null,picked:false,mins:15,left:900,running:false,tick:null,pending:false,rx:null,bk:null,sbirth:'',ssex:'',gh:null,gw:null,gwarn:null,loaded:false};
@@ -437,6 +461,7 @@ const FEATS=[
   {id:'msg',t:'칭찬·채찍질 메시지'}
 ];
 const CHANGES=[
+  {v:'0.8',d:'2026-11-06',l:['처음 입력: 다음 항목으로 자동 스크롤, 완료하면 맨 위로','개발자 모드(?dev=1): 기준일·월령을 옮겨 화면 확인, 7일 놀이 순환, 월령별 WHO 값']},
   {v:'0.7',d:'2026-11-06',l:['PWA(설치·오프라인), 공개 체험용 정리: 기본 생일 제거, 저장 방식 안내, 참고용 면책','서버가 없는 모드에서는 "앱 사용자 평균"·엄마 전송 숨김','GitHub Pages 자동 배포 설정']},
   {v:'0.6',d:'2026-11-06',l:['화면 단순화: 하단 탭 4개, 오늘 화면 한 장 중심','보조 내용은 접어서 표시, 엄마 화면은 이행 현황·한마디 우선']},
   {v:'0.5',d:'2026-11-06',l:['놀이 카드 20개 → 59개','저장소 어댑터 분리: 일반 브라우저·GitHub Pages에서도 기기에 저장되어 동작','자동 점검 확대 (놀이 기록·메시지·컨펌·새로고침 유지)']},
@@ -473,7 +498,7 @@ async function recordPlay(){
   if(E.rx!=null)rec.r=E.rx;
   if(E.bk!=null)rec.b=E.bk;
   S.plays.unshift(Object.assign({id:'p'+ts},rec));
-  E.rx=null;E.bk=null;resetTimer();render();toast('임무 완료. 엄마의 눈에 바로 보고됩니다.');
+  E.rx=null;E.bk=null;resetTimer();render();scrollTopSoon();toast('임무 완료. 엄마의 눈에 바로 보고됩니다.');
   try{await put('plays/p'+ts,rec)}catch(e){}
 }
 async function saveCfg(patch){
@@ -558,7 +583,7 @@ function trySaveBody(){
 async function commitBody(excl){
   const ts=Date.now(),mo=ageFloat();
   const rec={ts,mo,h:E.gh,w:E.gw,x:excl?1:0};
-  S.body.unshift(Object.assign({id:'b'+ts},rec));E.gwarn=null;render();toast('저장했어요.');
+  S.body.unshift(Object.assign({id:'b'+ts},rec));E.gwarn=null;render();scrollTopSoon();toast('저장했어요.');
   try{await put('body/b'+ts,rec)}catch(e){return}
   contribute(rec);
 }
@@ -595,18 +620,29 @@ function head(){
     if(d){const show=un&&b.dataset.tab===target&&E.tab!==target;d.hidden=!show;d.textContent=un}
   });
   $('#confbtn').setAttribute('aria-pressed',String(E.tab==='conf'));
+  devUpdate();
   $('#age').innerHTML=E.cfgSet?'만 '+a.mo+'<small>개월</small>'+a.d+'<small>일</small>':'<small style="font-size:18px;margin:0">생일을 입력해 주세요</small>';
   $('#foot').innerHTML='<b>참고용 안내</b> 이 앱의 내용은 의학적 진단·치료 조언이 아닙니다. 걱정되는 점은 소아과나 영유아 건강검진에서 상담하세요.<br><br>발달 기준: 미국 CDC "Learn the Signs. Act Early." 이정표(30개월·3세, 2026년 5월 개정본)를 바탕으로 한국어로 옮기고 단순화했습니다. 이정표는 아이의 75% 이상이 해당 월령까지 하는 행동입니다. 원문은 <a href="https://www.cdc.gov/act-early/milestones/index.html" target="_blank" rel="noopener">cdc.gov/act-early</a>에서 볼 수 있습니다. 이 앱은 CDC·HHS가 제작하거나 승인하거나 보증한 것이 아니며, 진단이나 선별검사가 아니고 영유아 건강검진(K-DST)과 소아과 상담을 대체하지 않습니다. 놀이 카드 중 "자체 구성"은 이정표를 바탕으로 만든 예시입니다.'+(Object.keys(S.ref).length?' 키·몸무게 기준: WHO Child Growth Standards.':'')+(E.db?'':' 지금은 저장되지 않는 미리보기 상태입니다.')+(E.local?'<br><br><b>저장 방식</b> 이 앱에는 서버가 없습니다. 입력한 내용은 이 기기의 브라우저에만 저장되고 개발자나 다른 사용자에게 전송되지 않습니다. 브라우저 데이터를 지우거나 앱을 삭제하면 기록이 사라지며, 다른 기기와는 공유되지 않습니다. 엄마·아빠 메시지와 지시는 한 기기를 같이 쓸 때만 보입니다.':'');
+}
+
+/* ---------- 입력 흐름 스크롤: 다음 입력으로 내려가고, 끝나면 맨 위로 ---------- */
+function scrollToSoon(sel,block){requestAnimationFrame(()=>setTimeout(()=>{const e=document.querySelector(sel);if(e)e.scrollIntoView({behavior:'smooth',block:block||'start'})},80))}
+function scrollTopSoon(){requestAnimationFrame(()=>setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),80))}
+function setupNext(){
+  const needKid=!(E.cfgSet&&S.cfg.sex);
+  if(needKid&&!(E.ssex||S.cfg.sex&&E.cfgSet))return scrollToSoon('#s-sex');
+  if(!E.role&&!E.srole)return scrollToSoon('#s-role');
+  scrollToSoon('#ssave','center');
 }
 function setupCard(){
   const needKid=!(E.cfgSet&&S.cfg.sex),needRole=!E.role;
   if(!needKid&&!needRole)return '';
   const dis=E.canWrite?'':' disabled';
   return `<section class="hero"><h2>처음 한 번만</h2>${E.local?'<p class="muted" style="margin-top:4px">입력 내용은 이 기기에만 저장돼요. 실명 대신 애칭을 써 주세요.</p>':''}
-  ${needKid?`<div class="q">아이 이름 또는 애칭</div><label class="field"><input id="sname" type="text" maxlength="12" placeholder="예: 콩이" value="${esc(E.sname||(E.cfgSet?S.cfg.name:''))}"${dis}></label>
-  <div class="q">생일</div>${wheelHTML('sbirth',E.sbirth||S.cfg.birth)}
-  <div class="q">성별</div><div class="seg wide"><button data-ssex="m" aria-pressed="${(E.ssex||S.cfg.sex)==='m'}"${dis}>남아</button><button data-ssex="f" aria-pressed="${(E.ssex||S.cfg.sex)==='f'}"${dis}>여아</button></div>`:''}
-  ${needRole?`<div class="q">나는</div><div class="seg wide"><button data-srole="dad" aria-pressed="${E.srole==='dad'}">아빠</button><button data-srole="mom" aria-pressed="${E.srole==='mom'}">엄마</button></div>`:''}
+  ${needKid?`<div class="q" id="s-name">아이 이름 또는 애칭</div><label class="field"><input id="sname" type="text" maxlength="12" enterkeyhint="next" placeholder="예: 콩이" value="${esc(E.sname||(E.cfgSet?S.cfg.name:''))}"${dis}></label>
+  <div class="q" id="s-birth">생일</div>${wheelHTML('sbirth',E.sbirth||S.cfg.birth)}<div style="margin-top:8px"><button class="btn ghost sm" id="birthok">생일 맞아요 ↓</button></div>
+  <div class="q" id="s-sex">성별</div><div class="seg wide"><button data-ssex="m" aria-pressed="${(E.ssex||S.cfg.sex)==='m'}"${dis}>남아</button><button data-ssex="f" aria-pressed="${(E.ssex||S.cfg.sex)==='f'}"${dis}>여아</button></div>`:''}
+  ${needRole?`<div class="q" id="s-role">나는</div><div class="seg wide"><button data-srole="dad" aria-pressed="${E.srole==='dad'}">아빠</button><button data-srole="mom" aria-pressed="${E.srole==='mom'}">엄마</button></div>`:''}
   <div style="margin-top:16px"><button class="btn big" id="ssave"${dis}>시작하기</button></div></section>`;
 }
 function inboxCard(){
@@ -801,6 +837,7 @@ function wheelInit(ws){
     const y=Number(dg.slice(0,4)),m=Number(dg.slice(4,6)),d=Number(dg.slice(6,8)),cy=new Date().getFullYear();
     if(y<cy-8||y>cy||m<1||m>12||d<1||d>new Date(y,m,0).getDate()){toast('날짜를 확인해 주세요.');return}
     setW(W.y,y);setW(W.m,m);setW(W.d,d);commit(true);
+    if(document.getElementById('s-sex')){txt.blur();scrollToSoon('#s-sex')}
   });
 }
 const CST={ok:'컨펌 OK',fix:'수정 요청',cut:'빼 주세요'};
@@ -816,6 +853,7 @@ function viewConf(){
   <div style="margin-top:12px"><button class="btn" id="fbsend"${dis}>남기기</button></div>
   ${S.fb.length?`<div class="msgbox" style="margin-top:16px">${S.fb.slice(0,20).map(f=>{const ft=FEATS.find(x=>x.id===f.feat);return `<div class="msg"><span class="by">${f.by==='mom'?'엄마':'아빠'} · ${esc(ft?ft.t.split(':')[0]:'')} · ${f.done?'반영됨':'대기'}</span>${esc(f.text)}<div class="row between"><small>${fdt(f.ts)}</small><button class="btn ghost sm" data-donefb="${f.id}"${dis}>${f.done?'반영 취소':'반영됨 표시'}</button></div></div>`}).join('')}</div>`:''}</section>`;
   h+=E.local?`<section class="card"><h3>이 기기에만 저장돼요</h3><p class="muted" style="margin-top:4px">컨펌·의견은 이 기기 안에만 남습니다. 개발자에게 의견을 보내려면 ${FEEDBACK_URL?`<a href="${esc(FEEDBACK_URL)}" target="_blank" rel="noopener">의견 보내기</a>를 이용해 주세요.`:'안내받은 방법(메신저·댓글)으로 알려 주세요.'}</p></section>`:`<details class="fold" data-k="inv"${isOpen('inv',false)?' open':''}><summary>엄마 초대 방법</summary><div class="fbody"><ol style="margin:0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:4px"><li>이 페이지 공유 메뉴를 연다</li><li>엄마 이메일로 초대한다</li><li>권한은 "기여자"로 한다 (보기만이면 컨펌·메시지를 못 보낸다)</li><li>엄마는 링크를 열고 "엄마"를 한 번 고른다</li></ol></div></details>`;
+  if(E.local)h+=`<p style="text-align:center;margin-top:8px"><button class="link" data-devtoggle="${DEV.on?0:1}">개발자 모드 ${DEV.on?'끄기':'켜기'}</button></p>`;
   h+=`<details class="fold" data-k="chg"${isOpen('chg',false)?' open':''}><summary>변경 이력</summary><div class="fbody">${CHANGES.map(c=>`<div class="chlog"><b>v${c.v}</b> ${c.d}<ul style="margin:2px 0 0;padding-left:18px">${c.l.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`).join('')}</div></details>`;
   return h;
 }
@@ -839,7 +877,7 @@ function bind(){
   m.querySelectorAll('[data-bk]').forEach(b=>b.onclick=()=>{E.bk=E.bk===Number(b.dataset.bk)?null:Number(b.dataset.bk);render()});
   m.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{E.cardId=b.dataset.pick;E.picked=true;E.rx=null;E.bk=null;resetTimer();render();window.scrollTo(0,0)});
   m.querySelectorAll('[data-assign]').forEach(b=>b.onclick=()=>assignCard(b.dataset.assign));
-  m.querySelectorAll('[data-ssex]').forEach(b=>b.onclick=()=>{E.ssex=b.dataset.ssex;const i=g('sbirth');if(i)E.sbirth=i.value;const n=g('sname');if(n)E.sname=n.value;render()});
+  m.querySelectorAll('[data-ssex]').forEach(b=>b.onclick=()=>{E.ssex=b.dataset.ssex;const i=g('sbirth');if(i)E.sbirth=i.value;const n=g('sname');if(n)E.sname=n.value;render();setupNext()});
   m.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>toggleExcl(b.dataset.ex));
   m.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{
     const k=b.dataset.st[0],d=Number(b.dataset.st.slice(1));
@@ -852,15 +890,18 @@ function bind(){
   if(g('gfix'))g('gfix').onclick=()=>{E.gwarn=null;render()};
   if(g('gx'))g('gx').onclick=()=>commitBody(true);
   if(g('gnox'))g('gnox').onclick=()=>commitBody(false);
-  m.querySelectorAll('[data-srole]').forEach(b=>b.onclick=()=>{E.srole=b.dataset.srole;const i=g('sbirth');if(i)E.sbirth=i.value;const n=g('sname');if(n)E.sname=n.value;render()});
+  m.querySelectorAll('[data-srole]').forEach(b=>b.onclick=()=>{E.srole=b.dataset.srole;const i=g('sbirth');if(i)E.sbirth=i.value;const n=g('sname');if(n)E.sname=n.value;render();setupNext()});
   m.querySelectorAll('[data-askitem]').forEach(b=>b.onclick=()=>sendMsg('ask','"'+b.dataset.askitem+'" 어디 있어?'));
   m.querySelectorAll('[data-msg]').forEach(b=>b.onclick=()=>{const [k,i]=b.dataset.msg.split(':');sendMsg(k,msgText(MSGS[k][Number(i)]))});
   m.querySelectorAll('[data-conf]').forEach(b=>b.onclick=()=>{const [id,st]=b.dataset.conf.split(':');setConf(id,st)});
   m.querySelectorAll('[data-fbfeat]').forEach(b=>b.onclick=()=>{E.fbfeat=b.dataset.fbfeat;const t=g('fbtext');if(t)E.fbtext=t.value;render()});
+  m.querySelectorAll('[data-devtoggle]').forEach(b=>b.onclick=()=>devToggleFromUI(b.dataset.devtoggle==='1'));
   m.querySelectorAll('[data-donefb]').forEach(b=>b.onclick=()=>doneFb(b.dataset.donefb));
   if(g('fbtext'))g('fbtext').oninput=e=>{E.fbtext=e.target.value};
   if(g('fbsend'))g('fbsend').onclick=()=>{const t=g('fbtext');if(t)E.fbtext=t.value;sendFb()};
   m.querySelectorAll('.wheelset').forEach(wheelInit);
+  if(g('birthok'))g('birthok').onclick=()=>{const i=g('sbirth');if(i)E.sbirth=i.value;setupNext()};
+  if(g('sname'))g('sname').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();E.sname=e.target.value;e.target.blur();scrollToSoon('#s-birth')}};
   if(g('ssave'))g('ssave').onclick=async()=>{
     const needKid=!(E.cfgSet&&S.cfg.sex);
     if(needKid){
@@ -874,7 +915,7 @@ function bind(){
       if(!E.srole){toast('아빠인지 엄마인지 골라 주세요.');return}
       await saveRole(E.srole);if(E.srole==='mom'){E.tab='mom'}
     }
-    render();
+    render();scrollTopSoon();
   };
   if(g('tgo'))g('tgo').onclick=toggleTimer;
   if(g('treset'))g('treset').onclick=()=>{resetTimer();render()};
@@ -886,12 +927,76 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{E.tab=b.datase
 function fromHash(){let h=(location.hash||'').slice(1);if(h==='today')h='dad';if(h==='dash')h='mom';if(['dad','check','grow','mom','conf'].includes(h))E.tab=h}
 window.addEventListener('hashchange',()=>{fromHash();render()});
 
+
+/* ---------- 개발자 패널 ---------- */
+const DOW=['일','월','화','수','목','금','토'];
+function devSetDate(d){DEV.off=new RealDate(d.getFullYear(),d.getMonth(),d.getDate(),12,0,0).getTime()-RealDate.now();try{localStorage.setItem('dpn_dev_off',String(DEV.off))}catch(e){}E.picked=false;render()}
+function devShift(unit,n){const d=new Date();if(unit==='d')d.setDate(d.getDate()+n);else d.setMonth(d.getMonth()+n);devSetDate(d)}
+function devAge(mo,day){const b=pdate(S.cfg.birth);const d=new Date(b.getFullYear(),b.getMonth()+mo,b.getDate()+day);devSetDate(d)}
+function devHTML(){
+  const a=ageOf(S.cfg.birth,new Date()),mo=ageFloat(),now=new Date();
+  const card=cardById(E.picked?E.cardId:pickToday()),dd=daysTo(S.cfg.birth,30);
+  const lo=Math.max(0,Math.floor(mo)-10),hi=lo+22;
+  let h=`<h3 style="margin:0 0 6px">개발자 모드</h3><p class="muted">기준일을 옮기면 앱 전체의 '오늘'이 같이 바뀝니다. 기록은 실제 데이터와 분리 저장돼요.</p>
+  <div class="dv-grid">
+   <b>기준일</b><span>${ymd(now)} (${DOW[now.getDay()]})${DEV.off?` · 실제보다 ${Math.round(DEV.off/864e5)}일`:' · 실제 오늘'}</span>
+   <b>아이 월령</b><span>만 ${a.mo}개월 ${a.d}일 (${mo}개월)</span>
+   <b>30개월까지</b><span>${dd>0?'D-'+dd:'+'+(-dd)+'일 지남'}</span>
+   <b>오늘의 놀이</b><span>${card?esc(card.t):'-'}</span>
+   <b>이정표 세트</b><span>CDC 30개월 한 가지(월령별 전환 없음)</span>
+   <b>성장 그래프</b><span>${lo}~${hi}개월 구간, WHO 월령 ${Math.round(mo)}</span>
+  </div>
+  <div class="q">날짜 이동</div><div class="dv-row">${[['d',-30,'-1개월'],['d',-7,'-1주'],['d',-1,'-1일'],['d',1,'+1일'],['d',7,'+1주'],['d',30,'+1개월']].map(x=>`<button class="btn sm ghost" data-dshift="${x[0]}:${x[1]}">${x[2]}</button>`).join('')}<button class="btn sm" data-dreset>오늘로</button></div>
+  <div class="q">날짜 직접 지정</div><div class="dv-row"><input type="date" id="devdate" value="${ymd(now)}"><button class="btn sm" data-ddate>이동</button></div>
+  <div class="q">월령으로 지정 (생일 기준)</div><div class="dv-row"><input type="number" id="devmo" min="0" max="72" value="${a.mo}" style="width:72px">개월<input type="number" id="devday" min="0" max="30" value="${a.d}" style="width:64px">일<button class="btn sm" data-dage>이동</button></div>`;
+  // 앞으로 7일 놀이 순환
+  const base=DEV.off,rows=[];
+  for(let i=0;i<7;i++){DEV.off=base+i*864e5;const d=new Date();const id=pickToday();const c=cardById(id);rows.push(`<tr><td>${ymd(d).slice(5)} (${DOW[d.getDay()]})</td><td>${c?esc(c.t):'-'}</td></tr>`)}
+  DEV.off=base;
+  h+=`<div class="q">앞으로 7일 놀이 순환 (현재 기록 기준)</div><table class="dv-t">${rows.join('')}</table>`;
+  // 월령별 WHO 값
+  if(S.ref&&S.ref[refKey('h')]){
+    const ms=[12,18,24,27,30,33,36,42,48],f=(k,m)=>{const a=valAt(k,m,-1.881),b=valAt(k,m,0),c=valAt(k,m,1.881);return a==null?'-':(k==='h'?[a,b,c].map(v=>v.toFixed(1)).join(' / '):[a,b,c].map(v=>v.toFixed(1)).join(' / '))};
+    h+=`<div class="q">월령별 WHO 3 / 50 / 97백분위 (${S.cfg.sex==='f'?'여아':'남아'})</div><table class="dv-t"><tr><td></td><td>키 cm</td><td>몸무게 kg</td></tr>${ms.map(m=>`<tr><td>${m}개월</td><td>${f('h',m)}</td><td>${f('w',m)}</td></tr>`).join('')}</table>`;
+  }else h+='<p class="muted">성별을 정하면 월령별 WHO 값이 표시돼요.</p>';
+  h+=`<div class="dv-row" style="margin-top:12px"><button class="btn sm ghost" data-doff>개발자 모드 끄기</button></div>`;
+  return h;
+}
+function devUpdate(){
+  if(!DEV.on)return;
+  let box=document.getElementById('dev');
+  if(!box){
+    box=document.createElement('div');box.id='dev';
+    box.innerHTML='<button id="devtog" aria-label="개발자 모드">DEV</button><div id="devbody" hidden></div>';
+    document.body.appendChild(box);
+    box.addEventListener('click',e=>{
+      const t=e.target.closest('button,[data-dshift]');if(!t)return;
+      if(t.id==='devtog'){E.devOpen=!E.devOpen;devUpdate();return}
+      if(t.dataset.dshift){const [u,n]=t.dataset.dshift.split(':');devShift(u,Number(n))}
+      else if('dreset' in t.dataset){devSetDate(new Date(RealDate.now()))}
+      else if('ddate' in t.dataset){const v=document.getElementById('devdate').value;if(v)devSetDate(pdate(v))}
+      else if('dage' in t.dataset){devAge(Number(document.getElementById('devmo').value||0),Number(document.getElementById('devday').value||0))}
+      else if('doff' in t.dataset){try{localStorage.removeItem('dpn_dev');localStorage.removeItem('dpn_dev_off')}catch(x){}location.href=location.pathname+'?dev=0'}
+    });
+  }
+  const tog=document.getElementById('devtog');tog.classList.toggle('shifted',!!DEV.off);
+  const body=document.getElementById('devbody');body.hidden=!E.devOpen;
+  if(E.devOpen&&!(document.activeElement&&box.contains(document.activeElement)&&/INPUT/.test(document.activeElement.tagName)))body.innerHTML=devHTML();
+}
+function devToggleFromUI(on){
+  try{
+    if(on){localStorage.setItem('dpn_dev','1');if(!localStorage.getItem('dpn_db_dev')&&localStorage.getItem('dpn_db'))localStorage.setItem('dpn_db_dev',localStorage.getItem('dpn_db'))}
+    else{localStorage.removeItem('dpn_dev');localStorage.removeItem('dpn_dev_off')}
+  }catch(e){}
+  location.reload();
+}
+
 /* ---------- 저장소 어댑터 ----------
    Artifact 런타임(claude.use)이 있으면 그대로 쓰고, 없으면(일반 브라우저·GitHub Pages·테스트) localStorage 로컬 저장소를 쓴다.
    앱 코드는 doc(path).set/get/onSnapshot, collection(name).orderBy().limit().onSnapshot, user.id/can 만 호출한다.
    나중에 Firebase 등으로 바꿀 때는 아래 localBackend 자리에 같은 모양의 객체만 넣으면 된다. */
 function localBackend(){
-  const KEY='dpn_db',subs=new Set();
+  const KEY=DEV.on?'dpn_db_dev':'dpn_db',subs=new Set();
   let store={};
   const load=()=>{try{store=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){store={}}};
   const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(store))}catch(e){throw Object.assign(new Error('storage'),{code:'storage'})}};

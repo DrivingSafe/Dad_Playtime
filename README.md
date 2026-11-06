@@ -12,6 +12,8 @@
 | `docs/DATA-SOURCES.md` | 발달 기준·성장 기준 출처와 법적 확인 항목 |
 | `docs/CHANGELOG.md` | 버전별 변경 |
 | `tests/smoke.js` | 생일 휠·백분위 점검(가짜 Artifact 저장소) |
+| `docs/DEV-MODE.md` | 개발자 모드(`?dev=1`): 월령·일자별 화면 확인 |
+| `tests/dev.js` | 입력 자동 스크롤·개발자 모드 점검 |
 | `tests/mobile.js` | 모바일 점검(폰 폭 렌더, 가로 넘침, 터치 대상) |
 | `tests/pwa.js` | PWA 점검(매니페스트·서비스 워커·오프라인), 사용법은 `docs/PWA-TEST.md` |
 | `docs/HOSTING.md` | 무료 정적 호스팅(GitHub Pages/Cloudflare Pages) 방법 |
