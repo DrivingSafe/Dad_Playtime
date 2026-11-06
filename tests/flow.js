@@ -11,7 +11,7 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
  await p.goto(url);await p.waitForTimeout(600);
 
  // 콘텐츠 무결성
- const c=await p.evaluate(()=>({n:CARDS.length,ids:CARDS.map(x=>x.id),bad:CARDS.filter(x=>!x.t||!x.steps||x.steps.length<3||!x.x30||!x.q||!x.doms.length||!x.ms.length||x.doms.some(d=>!DOM[d])||x.ms.some(m=>!MSBY[m])).map(x=>x.id),items:Object.keys(ITEMS).filter(k=>!CARDS.some(x=>x.id===k))}));
+ const c=await p.evaluate(()=>({n:CARDS.length,ids:CARDS.map(x=>x.id),bad:CARDS.filter(x=>!x.t||!x.steps||x.steps.length<3||!x.x30||!x.q||!x.doms.length||(!x.ms.length&&x.age[1]>26)||x.doms.some(d=>!DOM[d])||x.ms.some(m=>!MSBY[m])).map(x=>x.id),items:Object.keys(ITEMS).filter(k=>!CARDS.some(x=>x.id===k))}));
  ok(c.n>=55,'카드 수 '+c.n);ok(new Set(c.ids).size===c.n,'카드 id 중복 없음');ok(!c.bad.length,'카드 필드 유효 '+c.bad);ok(!c.items.length,'ITEMS가 없는 카드를 가리키지 않음');
 
  // WHO 표 자동 로드(http)

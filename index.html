@@ -241,6 +241,24 @@ nav button[hidden]{display:none}
 .rec{padding:10px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
 .rec:first-of-type{border-top:0}
 .rec .why{font-size:12.5px;color:var(--ink2)}
+
+/* ===== v0.11 도구·책 가이드, 안전 약속 ===== */
+.trow{display:flex;align-items:center;gap:10px;justify-content:space-between}
+.trow>b{flex:1;min-width:0}
+.tcat{font-size:12px;font-weight:700;color:var(--ink2);margin:10px 0 2px}
+.tool{padding:10px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:3px}
+.tool:first-of-type{border-top:0}
+.ttip{font-size:14px}
+.tmeta{font-size:12px;color:var(--ink2)}
+.tnote{font-size:12.5px;background:var(--warn-bg);border-radius:12px;padding:9px 12px;margin:0}
+.bex{margin-top:4px;background:var(--soft);border-radius:12px;padding:6px 12px}
+.bex summary{font-size:13px;min-height:36px}
+.bitem{padding:8px 0;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:2px}
+.bitem:first-of-type{border-top:0}
+.tag.warn{border-color:var(--warn-line);color:#8a6a10;background:var(--warn-bg);margin-left:4px}
+.avoid{background:#fdecea;border-radius:12px;padding:10px 12px;font-size:14px}
+.srule{font-size:14px;padding:8px 0;border-top:1px solid var(--line)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .avoid{background:#3a1f1d}:root:not([data-theme="light"]) .tag.warn{color:#e3b04b}}
 </style>
 </head>
 <body>
@@ -437,6 +455,30 @@ CARDS.push(
   {id:"walk18",t:"걸음마 걷기 놀이",doms:["mov"],ms:["x18m1", "x18m4"],src:OWN,steps:["안전한 바닥에 쿠션을 깔아 둔다", "한두 걸음 떨어져서 두 팔을 벌려 부른다", "아이가 혼자 걸어오게 기다린다", "소파나 낮은 의자 오르내리기도 곁에서 지켜본다"],x30:"걷는 거리를 한 걸음씩 늘린다.",q:"혼자 걸은 걸음은?",age:[12, 24]},
   {id:"point18",t:"가리키기 놀이",doms:["soc", "lang"],ms:["x18s2", "x18l1"],src:OWN,steps:["그림책이나 창밖 풍경을 같이 본다", "아빠가 먼저 가리키며 \"저기!\" 하고 말한다", "아이가 가리키면 이름을 말해 준다", "아이가 가리키는 걸 따라가서 같이 본다"],x30:"가리킨 것을 두 단어로 말해 본다.",q:"아이가 가리킨 횟수는?",age:[12, 24]}
 );
+/* 공공기관(트랙 A) 유형 기반 0~36개월 놀이. 이정표 세트가 없는 월령은 ms:[] */
+CARDS.push(
+  {id:"rattle0",t:"딸랑이 소리 따라가기",doms:["cog", "soc"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["아기가 깨어 있고 기분 좋을 때 눈앞 20~30cm에서 딸랑이를 천천히 흔든다", "천천히 옆으로 움직이며 눈이 따라오는지 본다", "귀 옆에서 흔들어 소리 나는 쪽으로 고개를 돌리게 한다", "끝나면 노래를 불러 주며 마무리한다"],x30:"소리 나는 방향을 바꿔 가며 세 번 더 한다.",q:"고개를 돌린 횟수는?",age:[0, 5]},
+  {id:"mobile0",t:"모빌 아래에서 말 걸기",doms:["soc", "lang"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["모빌을 켜 두고 아기를 눕힌다", "아빠 얼굴을 모빌 옆에 보여 주며 이름을 부른다", "모빌과 아빠 얼굴을 번갈아 보여 준다", "아기가 보는 쪽에 맞춰 짧게 이야기한다"],x30:"노래 한 곡 동안 허밍으로 눈 맞춘다.",q:"눈을 맞춘 시간은?",age:[0, 6]},
+  {id:"tummy0",t:"터미타임 눈높이 놀이",doms:["mov", "cog"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["깨어 있고 기분 좋을 때만 매트에 엎드려 놓는다 (혼자 두지 않기)", "장난감을 아기 눈높이에 둔다", "2~3분씩 몇 차례 나눠 한다", "힘들어하면 바로 안아서 쉰다"],x30:"장난감 위치를 바꿔 고개를 돌려 보게 한다.",q:"엎드려 있은 시간은?",age:[0, 7]},
+  {id:"peek4",t:"손수건 까꿍",doms:["cog", "soc"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["손수건으로 아빠 얼굴을 가렸다가 '까꿍' 하고 보여 준다 (5번)", "이번에는 손수건으로 장난감을 덮는다", "아기가 직접 수건을 당기게 기다린다", "당기면 크게 반응해 준다"],x30:"수건 밑에 숨긴 장난감을 찾게 한다.",q:"아기가 수건을 당긴 횟수는?",age:[4, 10]},
+  {id:"spoonpot4",t:"통과 숟가락 소리 내기",doms:["cog", "mov"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["큰 플라스틱 통과 숟가락을 준비한다 (삼킬 수 있는 작은 것은 치운다)", "아빠가 숟가락으로 통을 두드려 소리를 낸다", "아기가 숟가락을 잡고 두드리게 한다", "통에 넣고 흔들어 소리를 비교한다"],x30:"리듬을 바꿔 아기가 따라 하게 한다.",q:"두드린 횟수는?",age:[4, 10]},
+  {id:"mirror6",t:"거울 속 아기 이름 부르기",doms:["soc", "lang"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["아기를 안고 거울 앞에 앉는다", "거울 속 아기를 가리키며 '누구야?' 하고 이름을 부른다", "아기가 손을 뻗으면 같이 만져 본다", "아빠 얼굴도 같이 비춰 보여 준다"],x30:"거울 속 표정을 따라 하게 한다.",q:"거울을 본 시간은?",age:[5, 12]},
+  {id:"reach7",t:"손 닿지 않는 곳 장난감",doms:["mov", "soc"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["매트 끝에 장난감을 놓는다", "아기가 손을 뻗거나 기어서 가 보게 기다린다", "닿으면 크게 박수치며 축하한다", "안전한 바닥에서만 하고 위험한 물건은 치운다"],x30:"거리를 조금씩 늘린다.",q:"스스로 닿은 횟수는?",age:[7, 12]},
+  {id:"cover9",t:"천 덮기 까꿍",doms:["cog", "soc"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["얇은 천(숨 쉬기 쉬운 것)을 준비한다", "아빠 머리에 천을 쓰고 '어디 갔지?' 한다", "아기가 천을 벗기게 기다린다", "벗기면 '까꿍!' 하고 웃는다"],x30:"천 밑에 숨긴 인형 찾기로 넓힌다.",q:"천을 벗긴 횟수는?",age:[8, 13]},
+  {id:"dump9",t:"블록 쏟고 담기",doms:["cog", "mov", "lang"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["큰 통에 큰 블록 여러 개를 넣어 준다 (삼킬 수 없는 크기만)", "아기가 쏟게 둔다", "'하나, 둘' 세며 아빠가 먼저 담아 보인다", "아기가 담으면 박수쳐 준다"],x30:"작은 통과 큰 통으로 나눠 담는다.",q:"담은 블록은 몇 개였나요?",age:[9, 16]},
+  {id:"turn9",t:"아빠 차례, 아기 차례",doms:["soc", "lang"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["공이나 인형 하나를 준비한다", "'아빠 차례' 하고 공을 굴린다", "'아기 차례' 하고 아기에게 건넨다", "주고받기를 번갈아 5번 한다"],x30:"차례 말을 아기가 따라 하게 기다린다.",q:"주고받은 횟수는?",age:[9, 19]},
+  {id:"drum10",t:"두드리기 리듬 놀이",doms:["mov", "lang"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["실로폰·드럼·플라스틱 통 중 한 가지만 꺼낸다", "아빠가 리듬을 치면 아기가 따라 친다", "5분씩 3라운드로 나눠 한다", "빠르게·느리게를 바꿔 본다"],x30:"노래에 맞춰 같이 두드린다.",q:"따라 친 횟수는?",age:[10, 19]},
+  {id:"bubble1",t:"비누거품 터뜨리기",doms:["mov", "soc"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["아빠가 비눗방울을 분다 (아기는 앉은 자세)", "아기가 손으로 터뜨리게 한다", "'더!' 소리나 몸짓을 기다린다", "비눗물이 입에 들어가지 않게 지켜본다"],x30:"방울 크기를 바꿔 본다.",q:"터뜨린 방울은 몇 개였나요?",age:[10, 19]},
+  {id:"song10",t:"노래 멈추고 기다리기",doms:["lang", "soc"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["'어디 있나'나 '어린 송아지'를 불러 준다", "중간에 멈추고 아기를 쳐다본다", "아기의 소리나 몸짓을 기다린다", "반응하면 이어 부르며 크게 웃는다"],x30:"손동작을 함께 붙인다.",q:"아기가 반응한 횟수는?",age:[10, 19]},
+  {id:"cup12",t:"컵에 블록 넣기",doms:["cog", "mov"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["컵 3개와 큰 블록을 준비한다", "블록 하나를 컵에 넣어 보인다", "아기가 블록을 컵에 넣게 한다", "컵마다 나눠 담아 본다"],x30:"색깔별로 컵에 나눠 담는다.",q:"컵에 넣은 블록은 몇 개였나요?",age:[12, 19]},
+  {id:"knock13",t:"쌓고 무너뜨리기",doms:["mov", "cog", "soc"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["아빠가 블록 탑을 쌓는다", "아이가 '와르르' 무너뜨리게 한다", "다섯 번 반복한다", "아이가 직접 쌓아 보게 기다린다"],x30:"탑을 높이 쌓아 본다.",q:"무너뜨린 횟수는?",age:[13, 25]},
+  {id:"wheels13",t:"율동 동요 부르기",doms:["lang", "mov", "soc"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["손동작이 있는 동요 2~3곡을 고른다", "아빠가 먼저 율동을 보여 준다", "아이가 따라 하게 기다린다", "잘 따라 하면 한 번 더 부른다"],x30:"가사 일부를 비워 아이가 채우게 한다.",q:"따라 한 율동은 몇 개였나요?",age:[13, 25]},
+  {id:"hoop13",t:"미니 골대에 공 넣기",doms:["mov", "soc"],ms:[],src:"공공기관 유형 기반(자체 각색)",steps:["거실에 바구니나 미니 골대를 둔다", "부드러운 공을 준비한다", "아빠가 먼저 넣어 보인다", "아이가 넣으면 함께 '골인!' 외친다"],x30:"거리를 한 걸음씩 늘린다.",q:"들어간 공은 몇 개였나요?",age:[13, 25]},
+  {id:"press19",t:"버튼 누르기 차례 놀이",doms:["cog", "soc"],ms:["c2"],src:"공공기관 유형 기반(자체 각색)",steps:["버튼을 누르면 소리나 불이 나는 장난감을 꺼낸다", "아빠가 한 번 누른다", "'아이 차례' 하고 건넨다", "번갈아 누른다"],x30:"누를 때마다 무슨 소리가 나는지 말해 본다.",q:"번갈아 누른 횟수는?",age:[19, 30]},
+  {id:"work19",t:"아빠 출근 놀이",doms:["cog", "soc", "lang"],ms:["c1","l2"],src:"공공기관 유형 기반(자체 각색)",steps:["아빠 모자나 신발을 꺼낸다 (안전한 것만)", "아이가 입고 쓰게 둔다", "'어디 가요?' 하고 묻는다", "그린 그림은 냉장고에 붙여 둔다"],x30:"가는 곳에서 한 일을 이야기해 본다.",q:"아이가 한 말은 몇 개였나요?",age:[19, 30]},
+  {id:"sled19",t:"이불 썰매 밀기",doms:["mov", "soc"],ms:["m3","s2"],src:"공공기관 유형 기반(자체 각색)",steps:["바닥에 큰 이불이나 담요를 깐다", "아이를 앉히고 아빠가 천천히 끈다", "'준비, 시~작!' 하고 멈췄다 출발한다", "아이가 '또!'를 말하게 기다린다"],x30:"방향을 바꿔 본다.",q:"아이가 요청한 횟수는?",age:[19, 30]},
+  {id:"rhythm25",t:"리듬악기 하나로 빠르게·느리게",doms:["mov", "lang"],ms:["m1","l2"],src:"공공기관 유형 기반(자체 각색)",steps:["리듬악기 한 가지만 꺼낸다 (여러 개 주면 싫증)", "아빠가 빠르게·느리게 보여 준다", "아이가 따라 하게 한다", "아이가 정하고 아빠가 따라 한다"],x30:"노래에 맞춰 박자를 맞춘다.",q:"따라 친 횟수는?",age:[25, 40]}
+);
 /* 준비물·책 가이드. v:true 는 이 앱을 만들며 출처를 직접 확인한 책, 나머지는 대표 예시(구매 전 직접 확인) */
 const ITEMS={
   book:[
@@ -484,7 +526,7 @@ const BK=['거의 못함','1~2번','3~4번','5번 이상'];
 const RX=['잘 따라함','보통','힘들어함'];
 
 /* ---------- 상태 ---------- */
-const VERSION='0.10';
+const VERSION='0.11';
 const DEF_BIRTH=(()=>{const d=new Date();d.setMonth(d.getMonth()-30);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const S={cfg:{name:'우리 아이',birth:DEF_BIRTH,sex:'',ck:''},ms:{},plays:[],log:[],body:[],growth:[],ref:{},assign:{},msgs:[],conf:{},fb:[]};
 const E={op:{},mk:null,gk:null,cbirth:'',role:null,srole:null,seen:0,sname:'',fbtext:'',fbfeat:'dad',db:null,uid:null,canWrite:true,tab:'dad',cfgSet:false,cardId:null,picked:false,mins:15,left:900,running:false,tick:null,pending:false,rx:null,bk:null,sbirth:'',ssex:'',gh:null,gw:null,gwarn:null,loaded:false};
@@ -549,6 +591,7 @@ const FEATS=[
   {id:'msg',t:'칭찬·채찍질 메시지'}
 ];
 const CHANGES=[
+  {v:'0.11',d:'2026-11-06',l:['0~36개월 도구·책 데이터셋 반영: 공공·의학 기관(트랙 A) 41개를 뼈대로, 엄마들 후기(트랙 B) 22개는 같은 유형 아래 "엄마들이 많이 쓰는 예"로 표시','안전 약속(작은 부품, 바퀴 달린 보행기 금지 등)을 월령별로 표시','0~36개월 놀이 카드 21개 추가']},
   {v:'0.10',d:'2026-11-06',l:['놀이 카드 탐색: 상단 좌우 화살표·스와이프, "이걸로 하기" 버튼 위치·모양 통일','더 해볼 놀이 추천: 최근 2주 놀이 기록·이정표 체크·아이 반응 기반','18·24개월 이정표를 CDC 공식 체크리스트와 대조해 공개']},
   {v:'0.9',d:'2026-11-06',l:['월령별 이정표 세트 구조(18·24·30·36개월)와 월령별 놀이 카드 풀','아빠는 "엄마의 눈", 엄마는 "아빠의 놀이" 탭이 보이지 않음 (개발자 모드는 전체 보기)','원문 대조 전 이정표·카드(18·24개월)는 개발자 모드에서만 표시']},
   {v:'0.8',d:'2026-11-06',l:['처음 입력: 다음 항목으로 자동 스크롤, 완료하면 맨 위로','개발자 모드(?dev=1): 기준일·월령을 옮겨 화면 확인, 7일 놀이 순환, 월령별 WHO 값']},
@@ -604,7 +647,12 @@ async function assignCard(id){
 
 /* ---------- 계산 ---------- */
 function need(card){return card.ms.reduce((s,id)=>s+(2-lv(id)),0)}
-function cardPool(){const mo=ageFloat(),ok=c=>DRAFT()||c.ready!==false;let p=CARDS.filter(c=>ok(c)&&mo>=c.age[0]&&mo<c.age[1]);if(p.length<4)p=CARDS.filter(ok);return p}
+function cardPool(){
+  const mo=ageFloat(),ok=c=>DRAFT()||c.ready!==false,dist=c=>mo<c.age[0]?c.age[0]-mo:mo>=c.age[1]?mo-c.age[1]+.01:0;
+  const inside=CARDS.filter(c=>ok(c)&&dist(c)===0);if(inside.length>=4)return inside;
+  /* 월령에 맞는 카드가 4개 미만이면 월령 범위가 가장 가까운 카드로 채운다 */
+  return CARDS.filter(ok).sort((a,b)=>dist(a)-dist(b)||CARDS.indexOf(a)-CARDS.indexOf(b)).slice(0,Math.max(4,inside.length));
+}
 function ranked(){return cardPool().slice().sort((a,b)=>need(b)-need(a)||CARDS.indexOf(a)-CARDS.indexOf(b))}
 function dayAgo(n){const d=new Date();d.setDate(d.getDate()-n);return ymd(d)}
 function pickToday(){
@@ -804,6 +852,37 @@ function recFold(c){
     <p class="muted">최근 2주 영역별 놀이: ${bal}</p>
     ${list.map(r=>`<div class="rec"><div class="pickrow"><b>${esc(r.c.t)}</b>${pickBtn(r.c.id,c.id)}</div><span class="why">${r.why.length?esc(r.why.join(' · ')):'다양하게 해 보기'}</span></div>`).join('')}</div></details>`;
 }
+
+/* ---------- 0~36개월 도구·책 데이터 (data/tools.json): 트랙 A(공공·의학 기관)가 뼈대, 트랙 B(엄마들 후기)는 A 유형 아래 '엄마들이 많이 쓰는 예' ---------- */
+let TOOLS={tools:[],safety:[],sources:{}};
+async function loadTools(){try{const r=await fetch('data/tools.json');if(r.ok){TOOLS=await r.json();render()}}catch(e){}}
+const CATN={book:'책',toy:'장난감',play:'놀이',song:'노래',gear:'기구',household:'집에 있는 것'};
+const RELN={A:'공공·의학 기관','B+':'여러 후기에서 반복','B':'후기','B-':'판매·광고성 가능'};
+const FLAGN={overstimulation:'자극이 강하다는 후기',unverified_efficacy:'효능 문구는 확인되지 않음',commercial_keyword:'판매 키워드 표현',stairs:'계단 근처 사용 금지',magnet:'자석 이탈 점검',small_parts:'작은 부품 주의',single_review:'후기 1건',unverified_age:'월령 표기 확인 불가',short_session:'짧게'};
+const inShow=(t,mo)=>{const m=Math.floor(mo);return m>=t.show[0]&&m<=t.show[1]};
+const srcLabel=codes=>String(codes).split(',').map(c=>{const x=(TOOLS.sources||{})[c.trim()];return x?x.n.split(' ')[0]:c}).join('·');
+function toolsFold(){
+  const mo=ageFloat(),T=TOOLS.tools||[];if(!T.length)return '';
+  const As=T.filter(t=>t.track==='A'&&inShow(t,mo));if(!As.length)return '';
+  const Bof=id=>T.filter(t=>t.track==='B'&&t.of===id&&inShow(t,mo));
+  const cats=Object.keys(CATN).filter(c=>As.some(t=>t.cat===c));
+  const small=mo<36?'<p class="tnote">36개월 미만은 작은 부품(지름 31.7mm 통에 들어가는 것)이 없는 도구만 써요.</p>':'';
+  const row=t=>{const bs=Bof(t.id);return `<div class="tool"><div class="trow"><b>${esc(t.name)}</b><span class="tag">${t.show[0]}~${t.show[1]}개월</span></div>
+    ${t.tip&&t.tip!=='—'?`<div class="ttip">${esc(t.tip)}</div>`:''}
+    <div class="tmeta">${esc(srcLabel(t.src))}${t.type==='named'&&t.cat==='book'?' · 실제 도서명':''}${t.note?' · '+esc(t.note):''}</div>
+    ${bs.length?`<details class="bex"><summary>엄마들이 많이 쓰는 예 ${bs.length}개</summary>${bs.map(b=>`<div class="bitem"><b>${esc(b.name)}</b> <span class="tag">${RELN[b.rel]||b.rel}</span>${b.flags.map(f=>`<span class="tag warn">${esc(FLAGN[f]||f)}</span>`).join('')}
+      ${b.tip&&b.tip!=='—'?`<div class="ttip">${esc(b.tip)}</div>`:''}${b.limits?`<div class="tmeta">사용 한계: ${esc(b.limits)}</div>`:''}${b.note?`<div class="tmeta">${esc(b.note)}</div>`:''}</div>`).join('')}<p class="tmeta">후기 기반이라 신뢰도는 공공 자료보다 낮아요. 광고성 표현은 걸러서 봐 주세요.</p></details>`:''}</div>`};
+  return `<details class="fold" data-k="tools"${isOpen('tools',false)?' open':''}><summary><span>도구·책 가이드<span class="sub">${Math.floor(mo)}개월 · ${As.length}개</span></span></summary><div class="fbody">${small}
+    ${cats.map(c=>`<div class="tcat">${CATN[c]}</div>${As.filter(t=>t.cat===c).map(row).join('')}`).join('')}</div></details>`;
+}
+function safetyFold(){
+  const S=(TOOLS.safety||[]),mo=Math.floor(ageFloat());if(!S.length)return '';
+  const L=S.filter(x=>mo>=x.mo[0]&&mo<=x.mo[1]);if(!L.length)return '';
+  const avoid=L.filter(x=>x.kind==='avoid');
+  return `<details class="fold" data-k="safety"${isOpen('safety',avoid.length>0&&mo<24)?' open':''}><summary><span>안전 약속<span class="sub">${L.length}개</span></span></summary><div class="fbody">
+    ${avoid.map(x=>`<div class="avoid"><b>쓰지 마세요</b> ${esc(x.text)}<span class="tmeta"> · ${esc(srcLabel(x.src))}</span></div>`).join('')}
+    ${L.filter(x=>x.kind!=='avoid').map(x=>`<div class="srule">${esc(x.text)}<span class="tmeta"> · ${esc(srcLabel(x.src))}</span></div>`).join('')}</div></details>`;
+}
 function viewDad(){
   const order=ranked();
   if(!E.picked)E.cardId=pickToday();
@@ -823,6 +902,8 @@ function viewDad(){
   </section>
   ${recFold(c)}
   ${itemsFold(c)}
+  ${toolsFold()}
+  ${safetyFold()}
   <section class="card">
     <h2>다 했으면 보고</h2>
     <div class="q">아이 반응</div>
@@ -1095,6 +1176,7 @@ function devHTML(){
    <b>아이 월령</b><span>만 ${a.mo}개월 ${a.d}일 (${mo}개월)</span>
    <b>다음 이정표</b><span>${tA?tA+'개월까지 '+(dd>0?'D-'+dd:'+'+(-dd)+'일'):'마지막 세트'}</span>
    <b>오늘의 놀이</b><span>${card?esc(card.t):'-'}</span>
+   <b>도구 데이터</b><span>${(TOOLS.tools||[]).length?`${TOOLS.tools.filter(t=>t.track==='A').length}개(공공 A) · ${TOOLS.tools.filter(t=>t.track==='B').length}개(후기 B) · 안전 ${(TOOLS.safety||[]).length}개`:'불러오는 중/없음'}</span>
    <b>이정표 세트</b><span>${CURSET}개월 세트${MSETS[CURSET].ready?'':' (원문 대조 전 초안)'} · 놀이 카드 ${cardPool().length}/${CARDS.length}개</span>
    <b>성장 그래프</b><span>${lo}~${hi}개월 구간, WHO 월령 ${Math.round(mo)}</span>
   </div>
@@ -1200,7 +1282,7 @@ if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)&&typeof clau
 
 /* ---------- 시작 ---------- */
 (async function init(){
-  fromHash();resetTimer();render();
+  fromHash();resetTimer();render();loadTools();
   const {db,user}=await getBackend();
   if(!db){render();return}
   E.db=db;

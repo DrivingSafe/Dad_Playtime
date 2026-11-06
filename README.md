@@ -12,6 +12,8 @@
 | `docs/DATA-SOURCES.md` | 발달 기준·성장 기준 출처와 법적 확인 항목 |
 | `docs/CHANGELOG.md` | 버전별 변경 |
 | `tests/smoke.js` | 생일 휠·백분위 점검(가짜 Artifact 저장소) |
+| `docs/TOOLS-DATA.md` | 0~36개월 도구·책·안전 데이터(`data/tools.json`) 구조와 한계 |
+| `tests/tools.js` | 도구 데이터 무결성·표시 점검 |
 | `docs/PAIRING.md` | 엄마·아빠 연결(매칭) 설계 |
 | `tests/recommend.js` | 카드 탐색·고르기 버튼 통일·추천 점검 |
 | `tests/age.js` | 월령별 세트·카드 풀·역할별 탭 점검 |
