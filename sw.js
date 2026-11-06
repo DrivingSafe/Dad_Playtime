@@ -1,6 +1,6 @@
 /* 서비스 워커: 앱 본체와 WHO 표를 캐시해 오프라인에서도 열리게 한다.
    index.html 을 고칠 때마다 VERSION 을 올려야 기존 설치본이 새 버전으로 바뀐다. */
-const VERSION='dpn-v0.12.1';
+const VERSION='dpn-v0.13';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png',
   './data/tools.json','./data/who/doc_wfa_m.json','./data/who/doc_wfa_f.json','./data/who/doc_lfa_m.json','./data/who/doc_lfa_f.json'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(VERSION).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});

@@ -27,8 +27,8 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
   ok(await p.evaluate(()=>S.cfg.name==='콩이'&&S.cfg.sex==='f'&&E.role==='dad'),'입력값 저장');
   // 임무 완료 후에도 맨 위
   await p.evaluate(()=>window.scrollTo(0,900));await p.waitForTimeout(200);
-  await p.click('[data-start="play"]');await p.waitForTimeout(300);await p.evaluate(()=>{TM.end=Date.now()-1;timerTick();window.scrollTo(0,900)});await p.waitForTimeout(500);await p.click('[data-fin="save"]');await p.waitForTimeout(1500);
-  ok(await sy()===0,'임무 완료 후 맨 위로 복귀');
+  await p.click('[data-start="play"]');await p.waitForTimeout(300);await p.evaluate(()=>window.scrollTo(0,900));await p.click('#minibar [data-mbend]');await p.waitForTimeout(300);await p.click('[data-fin="done"]');await p.waitForTimeout(400);await p.click('[data-fin="report"]');await p.waitForTimeout(300);await p.evaluate(()=>window.scrollTo(0,900));await p.click('[data-fin="send"]');await p.waitForTimeout(1500);
+  ok(await sy()===0,'오늘 마무리 보고 후 맨 위로 복귀');
   ok(!errs.length,'페이지 오류 없음 '+errs);await ctx.close();
  }
  // ---- B. 개발자 모드 ----

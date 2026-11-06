@@ -33,10 +33,12 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
 
  // 놀이 기록
  await p.click('[data-tab="dad"]');await p.click('[data-start="play"]');await p.waitForTimeout(300);
- ok(await p.evaluate(()=>!!TM&&TM.kind==='play'&&TM.mins===15),'이걸로 하기 → 타이머 시작');
- await p.evaluate(()=>{TM.end=Date.now()-1;timerTick()});await p.waitForTimeout(400);
- await p.click('[data-frx="0"]');await p.click('[data-fbk="2"]');await p.click('[data-fin="report"]');await p.waitForTimeout(500);
- ok(await p.evaluate(()=>S.plays.length===1&&S.plays[0].mins===15&&S.plays[0].kind==='play'&&S.plays[0].r===0&&S.plays[0].b===2&&TM===null),'놀이 기록 저장(보고 시트)');
+ ok(await p.evaluate(()=>!!ACT&&ACT.kind==='play'&&DAY.state==='running'),'이걸로 하기 → 오늘 카운트 시작');
+ await p.click('#minibar [data-mbend]');await p.waitForTimeout(300);
+ await p.click('[data-frx="0"]');await p.click('[data-fbk="2"]');await p.click('[data-fin="done"]');await p.waitForTimeout(500);
+ ok(await p.evaluate(()=>S.plays.length===1&&S.plays[0].mins>=1&&S.plays[0].kind==='play'&&S.plays[0].r===0&&S.plays[0].b===2&&ACT===null),'놀이 완료 기록(반응·횟수)');
+ await p.click('[data-fin="report"]');await p.waitForTimeout(300);await p.click('[data-fin="send"]');await p.waitForTimeout(500);
+ ok(await p.evaluate(()=>S.msgs.length===1&&S.msgs[0].kind==='report'&&/완료/.test(S.msgs[0].text)),'오늘 마무리 → 엄마에게 보고');
 
  // 메시지
  ok(!(await p.$('[data-msg="ask:0"]')),'서버 없는 모드에서는 엄마에게 보내기 숨김');await p.evaluate(()=>sendMsg('ask','테스트'));await p.waitForTimeout(200);

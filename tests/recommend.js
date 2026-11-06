@@ -18,7 +18,7 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
  ok(await p.evaluate(()=>!!document.querySelector('.stack[data-kind="play"] .behind.b1')&&/다음 ·/.test(document.querySelector('.stack[data-kind="play"] .behind.b1').textContent)),'뒤에 겹친 다음 카드(다음 · 제목)가 있음');
  ok(await p.evaluate(()=>!!document.querySelector('.stack[data-kind="play"] .behind.b2')),'두 번째 뒤 카드도 있음');
  await p.click('[data-cnav="play:1"]');
- await p.waitForFunction(()=>document.getElementById('card-play').classList.contains('enter-r'),null,{timeout:2000}).then(()=>ok(true,'넘길 때 새 카드가 들어오는 애니메이션(enter-r)')).catch(()=>ok(false,'넘길 때 새 카드가 들어오는 애니메이션(enter-r)'));
+ await p.waitForFunction(()=>document.querySelector('#card-play .mslide').classList.contains('enter-r'),null,{timeout:2000}).then(()=>ok(true,'넘길 때 새 내용이 옆에서 미끄러져 들어옴(enter-r)')).catch(()=>ok(false,'넘길 때 새 내용이 옆에서 미끄러져 들어옴(enter-r)'));
  await p.waitForTimeout(450);
  const t1=await title();ok(t1!==t0,'› 로 다음 놀이');ok(new RegExp('^'+(i0%N+1)+' / '+N+' · 내가 고름').test(await count()),'카운터 '+(i0%N+1)+'번째·내가 고름');
  await p.click('[data-cnav="play:-1"]');await p.waitForTimeout(600);ok(await title()===t0,'‹ 로 이전 놀이');
@@ -29,9 +29,12 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
  await p.click('[data-crec="play"]');await p.waitForTimeout(300);ok(await title()===t0&&/추천/.test(await count()),'추천으로 돌아가기');
  // ---- 드래그(스와이프) ----
  const box=await (await p.$('#card-play')).boundingBox();
+ const btnBox0=await p.evaluate(()=>{const b=document.querySelector('#card-play .mfoot .btn').getBoundingClientRect();const n=document.querySelector('#card-play .navrow').getBoundingClientRect();return[b.x,b.y,b.width,n.x,n.y]});
  await p.mouse.move(box.x+box.width/2,box.y+box.height/2);await p.mouse.down();await p.mouse.move(box.x+box.width/2-60,box.y+box.height/2,{steps:4});
- const mid=await p.evaluate(()=>document.getElementById('card-play').style.transform);
- ok(/translateX\(-?\d/.test(mid),'드래그 중 카드가 손가락을 따라 움직임 ('+mid+')');
+ const mid=await p.evaluate(()=>document.querySelector('#card-play .mslide').style.transform);
+ const bBox=await p.evaluate(()=>{const b=document.querySelector('#card-play .mfoot .btn').getBoundingClientRect();const n=document.querySelector('#card-play .navrow').getBoundingClientRect();return[b.x,b.y,b.width,n.x,n.y]});
+ ok(JSON.stringify(bBox)===JSON.stringify(btnBox0),'드래그 중에도 버튼·화살표 줄은 제자리 (고정 프레임)');
+ ok(/translateX\(-?\d/.test(mid)&&!/rotate/.test(mid),'드래그 중 내용이 손가락을 따라 옆으로만 움직임, 회전 없음 ('+mid+')');
  await p.mouse.move(box.x+box.width/2-200,box.y+box.height/2,{steps:6});await p.mouse.up();await p.waitForTimeout(700);
  ok(await title()!==t0,'왼쪽으로 스와이프 → 다음 놀이');
  // 조금만 끌면 제자리로
