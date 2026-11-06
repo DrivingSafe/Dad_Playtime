@@ -44,3 +44,7 @@ invites/{code}               { familyId, role(남은 역할), expiresAt, usedBy 
 2. Firebase 어댑터(`getBackend`에 같은 모양으로 추가) — 개발
 3. 가족 생성·초대·합류 화면, 보안 규칙, 에뮬레이터 테스트 — 개발
 4. 계정 복구, 동의 화면, 탈퇴 — 개발
+
+## 보고 알림 (엄마 폰)
+- 아빠가 "엄마에게 보고하기"를 누르면 `families/{fid}/msgs`에 보고 문서가 생기고, 서버 함수(Cloud Functions)가 엄마 기기의 푸시 토큰(FCM)으로 알림을 보낸다. 푸시 토큰은 `users/{uid}`에 저장. 서버 함수는 유료 플랜(Blaze) 필요.
+- iOS 웹앱 푸시는 홈 화면에 설치한 PWA에서만 동작한다.

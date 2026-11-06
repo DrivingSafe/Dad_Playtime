@@ -259,13 +259,79 @@ nav button[hidden]{display:none}
 .avoid{background:#fdecea;border-radius:12px;padding:10px 12px;font-size:14px}
 .srule{font-size:14px;padding:8px 0;border-top:1px solid var(--line)}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .avoid{background:#3a1f1d}:root:not([data-theme="light"]) .tag.warn{color:#e3b04b}}
+
+/* ===== v0.12 오늘의 카드 스택·타이머 바·시트·도감 ===== */
+.stack{position:relative;padding-bottom:36px}
+.behind{position:absolute;border-radius:20px;background:var(--card);box-shadow:var(--shadow);pointer-events:none}
+.behind.b1{left:14px;right:14px;top:14px;bottom:0;z-index:1;display:flex;align-items:flex-end;justify-content:center;padding-bottom:9px;font-size:12px;color:var(--ink2);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.behind.b1 span{max-width:86%;overflow:hidden;text-overflow:ellipsis}
+.behind.b2{left:30px;right:30px;top:26px;bottom:-9px;z-index:0;opacity:.55}
+.mcard{position:relative;z-index:2;background:var(--card);border-radius:20px;box-shadow:var(--shadow);padding:18px 20px 20px;touch-action:pan-y;user-select:none;-webkit-user-select:none;will-change:transform}
+@keyframes enterR{from{transform:translateX(75%) rotate(6deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes enterL{from{transform:translateX(-75%) rotate(-6deg);opacity:0}to{transform:none;opacity:1}}
+.mcard.enter-r{animation:enterR .3s cubic-bezier(.2,.9,.3,1)}
+.mcard.enter-l{animation:enterL .3s cubic-bezier(.2,.9,.3,1)}
+@media (prefers-reduced-motion:reduce){.mcard.enter-r,.mcard.enter-l{animation:none}}
+.navbtn[disabled]{opacity:.3}
+.mfoot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px}
+.mfoot .btn.go{flex:1;min-width:0;font-size:16px;padding:15px 14px;border-radius:99px}
+.mfoot .btn.go:disabled{opacity:.5}
+#minibar{position:fixed;top:0;left:0;right:0;z-index:30;display:flex;align-items:center;gap:10px;padding:calc(8px + env(safe-area-inset-top,0px)) 14px 8px;background:var(--pri);color:var(--pri-ink);box-shadow:0 2px 12px rgba(0,0,0,.25)}
+#minibar[hidden]{display:none}
+#minibar.done{background:var(--sun);color:var(--sun-ink)}
+#minibar .mb-l{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
+#minibar .mb-tx{display:flex;flex-direction:column;min-width:0;line-height:1.2}
+#minibar .mb-title{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#minibar .mb-sub{font-size:11px;opacity:.85}
+#minibar .mb-time{font-family:var(--f-num);font-size:24px;font-variant-numeric:tabular-nums}
+#minibar .mb-btn{font:inherit;font-size:12px;font-weight:700;border:0;border-radius:99px;padding:7px 12px;background:rgba(255,255,255,.22);color:inherit;min-height:34px;cursor:pointer}
+#minibar.done .mb-btn{background:rgba(0,0,0,.14)}
+body.hasbar{padding-top:calc(52px + env(safe-area-inset-top,0px))}
+body.hasbar header.top{padding-top:12px}
+body.noscroll{overflow:hidden}
+#sheet{position:fixed;inset:0;z-index:40}
+#sheet[hidden]{display:none}
+.sheet-bg{position:absolute;inset:0;background:rgba(0,0,0,.45)}
+@keyframes sheetUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.sheet-body{position:absolute;left:max(0px,calc(50% - 280px));right:max(0px,calc(50% - 280px));bottom:0;max-height:90vh;overflow:auto;background:var(--card);color:var(--ink);border-radius:22px 22px 0 0;padding:14px 18px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 30px rgba(0,0,0,.25);animation:sheetUp .25s ease-out}
+#sheet.full .sheet-body{top:0;max-height:none;border-radius:0;background:var(--bg);padding:calc(10px + env(safe-area-inset-top,0px)) 16px 120px;animation:none}
+#sheet.full .sheet-bg{display:none}
+.sheet-grab{width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}
+.seg.col{flex-direction:column}
+.seg.col button{text-align:left;padding:12px 14px}
+.fin-actions{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.lib-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.lib-top b{font-size:20px}
+.xbtn{width:44px;height:44px;border-radius:50%;border:0;background:var(--soft);color:var(--ink);font-size:18px;cursor:pointer}
+.chiprow{display:flex;gap:6px;overflow-x:auto;padding:10px 0 6px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.chiprow::-webkit-scrollbar{display:none}
+.fchip{flex:0 0 auto;font:inherit;font-size:13px;font-weight:500;padding:8px 14px;border-radius:99px;border:0;background:var(--card);color:var(--ink2);box-shadow:var(--shadow);cursor:pointer;min-height:38px}
+.fchip[aria-pressed="true"]{background:var(--pri);color:var(--pri-ink);font-weight:700}
+.lib-opt{display:flex;align-items:center;justify-content:space-between;font-size:13px;color:var(--ink2);margin:4px 0 10px}
+.lib-opt label{display:flex;align-items:center;gap:6px}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--card);border:0;border-radius:16px;padding:12px;text-align:left;min-height:88px;display:flex;flex-direction:column;gap:5px;box-shadow:var(--shadow);cursor:pointer;color:var(--ink);font:inherit;touch-action:manipulation}
+.tile b{font-size:14px;line-height:1.3;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tile small{font-size:11.5px;color:var(--ink2);margin-top:auto}
+.dots{display:flex;gap:4px}.dots i{display:inline-block;width:8px;height:8px;border-radius:50%;background:currentColor}
+.lib-detail{padding-bottom:20px}
+.sheet-bar{position:fixed;left:max(0px,calc(50% - 280px));right:max(0px,calc(50% - 280px));bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--line)}
+.libcard{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;border:0;font:inherit;color:var(--ink);cursor:pointer}
+.libcard span:first-child{display:flex;flex-direction:column;gap:2px}
+.libcard small{font-size:12.5px;color:var(--ink2);font-weight:400}
+.chev{font-size:26px;color:var(--ink2)}
+.ckq{font-size:13px;color:var(--ink2);margin:4px 0 0}
+#devrole{display:flex;gap:4px;margin-top:6px}
+#devrole[hidden]{display:none}
+.dvpill{font:inherit;font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--ink2);cursor:pointer}
+.dvpill[aria-pressed="true"]{background:#22303A;color:#fff;border-color:#22303A}
 </style>
 </head>
 <body>
 
 <div class="wrap">
   <header class="top">
-    <div><div class="who" id="who"></div><div class="age" id="age"></div></div>
+    <div><div class="who" id="who"></div><div class="age" id="age"></div><div id="devrole" hidden></div></div>
     <button class="pill-btn" id="confbtn" data-tab="conf" aria-pressed="false">의견</button>
   </header>
   <main id="main"></main>
@@ -277,6 +343,8 @@ nav button[hidden]{display:none}
   <button role="tab" data-tab="grow"><svg viewBox="0 0 24 24"><path d="M4 19h16"/><path d="M6 16l4-5 3 3 5-7"/></svg><span>키·몸무게</span></button>
   <button role="tab" data-tab="mom"><svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg><span>엄마의 눈</span><i class="dot" hidden></i></button>
 </nav></div>
+<div id="minibar" hidden><div class="mb-l"><span class="mb-ic">⏱</span><div class="mb-tx"><b class="mb-title"></b><small class="mb-sub"></small></div></div><span class="mb-time"></span><button class="mb-btn" data-mbend>끝내기</button></div>
+<div id="sheet" hidden></div>
 <div id="toast" hidden></div>
 
 <script>
@@ -526,9 +594,9 @@ const BK=['거의 못함','1~2번','3~4번','5번 이상'];
 const RX=['잘 따라함','보통','힘들어함'];
 
 /* ---------- 상태 ---------- */
-const VERSION='0.11';
+const VERSION='0.12';
 const DEF_BIRTH=(()=>{const d=new Date();d.setMonth(d.getMonth()-30);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
-const S={cfg:{name:'우리 아이',birth:DEF_BIRTH,sex:'',ck:''},ms:{},plays:[],log:[],body:[],growth:[],ref:{},assign:{},msgs:[],conf:{},fb:[]};
+const S={cfg:{name:'우리 아이',birth:DEF_BIRTH,sex:'',ck:''},ms:{},plays:[],log:[],body:[],growth:[],ref:{},assign:{},assignBook:{},assignTs:{},msgs:[],conf:{},fb:[]};
 const E={op:{},mk:null,gk:null,cbirth:'',role:null,srole:null,seen:0,sname:'',fbtext:'',fbfeat:'dad',db:null,uid:null,canWrite:true,tab:'dad',cfgSet:false,cardId:null,picked:false,mins:15,left:900,running:false,tick:null,pending:false,rx:null,bk:null,sbirth:'',ssex:'',gh:null,gw:null,gwarn:null,loaded:false};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -548,10 +616,10 @@ const MSGS={
   ask:['오늘 임무 끝냈어','준비물 어디 있어?','이 책 어떻게 읽어?']
 };
 const msgText=t=>t.replace('{n}',nm());
-async function sendMsg(kind,text,extra){
+async function sendMsg(kind,text,extra,quiet){
   const from=E.role||'dad',ts=Date.now();
   const rec={from,kind,text:extra?text+' '+extra:text,ts};
-  S.msgs.unshift(Object.assign({id:'m'+ts},rec));render();toast('보냈어요.');
+  S.msgs.unshift(Object.assign({id:'m'+ts},rec));render();if(!quiet)toast('보냈어요.');
   try{await put('msgs/m'+ts,rec)}catch(e){}
 }
 async function markSeen(){
@@ -591,6 +659,7 @@ const FEATS=[
   {id:'msg',t:'칭찬·채찍질 메시지'}
 ];
 const CHANGES=[
+  {v:'0.12',d:'2026-11-06',l:['오늘 화면: 오늘의 놀이·오늘의 도서 카드(뒤에 겹친 카드, 스와이프 애니메이션), "이걸로 하기"로 바로 카운트다운 시작','타이머를 화면 위 바로 분리·고정. 새로고침해도 이어가고, 끝나면 알람 후 "엄마에게 보고할까요?"','놀이·도서·도구마다 다른 보고 기준, 고른 카드 기억, 엄마가 놀이·도서 지시','도감을 전체 화면 시트(탭·필터 칩·2열 카드)로, 발달 체크인(요즘 잘 하나요?), 개발자 역할 전환(이름 7번 탭)']},
   {v:'0.11',d:'2026-11-06',l:['0~36개월 도구·책 데이터셋 반영: 공공·의학 기관(트랙 A) 41개를 뼈대로, 엄마들 후기(트랙 B) 22개는 같은 유형 아래 "엄마들이 많이 쓰는 예"로 표시','안전 약속(작은 부품, 바퀴 달린 보행기 금지 등)을 월령별로 표시','0~36개월 놀이 카드 21개 추가']},
   {v:'0.10',d:'2026-11-06',l:['놀이 카드 탐색: 상단 좌우 화살표·스와이프, "이걸로 하기" 버튼 위치·모양 통일','더 해볼 놀이 추천: 최근 2주 놀이 기록·이정표 체크·아이 반응 기반','18·24개월 이정표를 CDC 공식 체크리스트와 대조해 공개']},
   {v:'0.9',d:'2026-11-06',l:['월령별 이정표 세트 구조(18·24·30·36개월)와 월령별 놀이 카드 풀','아빠는 "엄마의 눈", 엄마는 "아빠의 놀이" 탭이 보이지 않음 (개발자 모드는 전체 보기)','원문 대조 전 이정표·카드(18·24개월)는 개발자 모드에서만 표시']},
@@ -624,25 +693,16 @@ async function setLevel(id,level){
   try{await put('ms/'+id,S.ms[id]);if(level!==prev)await put('log/l'+ts+id,{ms:id,from:prev,to:level,ts})}catch(e){}
 }
 const cardById=id=>CARDS.find(c=>c.id===id);
-async function recordPlay(){
-  const card=cardById(E.cardId);if(!card)return;
-  const ts=Date.now();
-  const rec={card:card.id,mins:E.mins,ts,date:today()};
-  if(E.rx!=null)rec.r=E.rx;
-  if(E.bk!=null)rec.b=E.bk;
-  S.plays.unshift(Object.assign({id:'p'+ts},rec));
-  E.rx=null;E.bk=null;resetTimer();render();scrollTopSoon();toast('임무 완료. 엄마의 눈에 바로 보고됩니다.');
-  try{await put('plays/p'+ts,rec)}catch(e){}
-}
 async function saveCfg(patch){
   S.cfg=Object.assign({},S.cfg,patch);
   if(!S.cfg.ck)S.cfg.ck='c'+Math.random().toString(36).slice(2,10);
   E.cfgSet=true;render();
   try{await put('config/child',S.cfg)}catch(e){}
 }
-async function assignCard(id){
-  S.assign[today()]=id;E.cardId=id;E.picked=true;render();toast('오늘의 지시를 바꿨어요.');
-  try{await put('assign/'+today(),{cardId:id,ts:Date.now()})}catch(e){}
+async function assignItem(kind,id){
+  const d=today();if(kind==='play')S.assign[d]=id;else S.assignBook[d]=id;S.assignTs[d]=Date.now();
+  render();toast('오늘의 지시를 바꿨어요.');
+  try{await put('assign/'+d,{cardId:S.assign[d]||null,bookId:S.assignBook[d]||null,ts:S.assignTs[d]})}catch(e){}
 }
 
 /* ---------- 계산 ---------- */
@@ -655,12 +715,6 @@ function cardPool(){
 }
 function ranked(){return cardPool().slice().sort((a,b)=>need(b)-need(a)||CARDS.indexOf(a)-CARDS.indexOf(b))}
 function dayAgo(n){const d=new Date();d.setDate(d.getDate()-n);return ymd(d)}
-function pickToday(){
-  if(S.assign[today()]&&cardById(S.assign[today()]))return S.assign[today()];
-  const recent=new Set(S.plays.filter(p=>p.date>=dayAgo(5)).map(p=>p.card));
-  let pool=ranked().filter(c=>!recent.has(c.id));if(pool.length<4)pool=ranked();
-  const top=pool.slice(0,6);return top[dayNum()%top.length].id;
-}
 function domScore(d){const l=MS.filter(m=>m.d===d);const got=l.filter(m=>lv(m.id)===2).length;const pts=l.reduce((s,m)=>s+lv(m.id),0);return{n:l.length,got,pct:Math.round(pts/(2*l.length)*100)}}
 function lastDays(n){const out=[];for(let i=n-1;i>=0;i--)out.push(dayAgo(i));return out}
 function minsOn(date){return S.plays.filter(p=>p.date===date).reduce((s,p)=>s+p.mins,0)}
@@ -735,16 +789,7 @@ async function toggleExcl(id){
 
 /* ---------- 타이머 ---------- */
 function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
-function resetTimer(){clearInterval(E.tick);E.running=false;E.left=E.mins*60;const t=$('#timer');if(t)t.textContent=fmt(E.left);const b=$('#tgo');if(b)b.textContent='시작'}
-function toggleTimer(){
-  if(E.running){clearInterval(E.tick);E.running=false;$('#tgo').textContent='계속';return}
-  if(E.left<=0)E.left=E.mins*60;
-  E.running=true;$('#tgo').textContent='일시정지';
-  E.tick=setInterval(()=>{
-    E.left--;const t=$('#timer');if(t)t.textContent=fmt(Math.max(E.left,0));
-    if(E.left<=0){clearInterval(E.tick);E.running=false;const b=$('#tgo');if(b)b.textContent='다시';toast('시간 끝. 임무 완료를 눌러 보고하세요.')}
-  },1000);
-}
+function resetTimer(){}
 
 /* ---------- 화면 ---------- */
 const fdt=ts=>new Date(ts).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'numeric',minute:'2-digit'});
@@ -808,14 +853,272 @@ function itemsFold(c){
   </div></details>`;
 }
 
-/* ---------- 놀이 고르기: 버튼 모양·위치를 어디서나 같게 ---------- */
-const pickBtn=(id,curId)=>id===curId?'<span class="pickbtn picked">선택됨</span>':`<button class="btn ghost sm pickbtn" data-pick="${id}">이걸로 하기</button>`;
-function cardNav(n){
-  const order=ranked();if(!order.length)return;
-  let i=order.findIndex(x=>x.id===E.cardId);if(i<0)i=0;
-  i=(i+n+order.length)%order.length;
-  E.cardId=order[i].id;E.picked=true;E.rx=null;E.bk=null;resetTimer();render();
+/* ===== v0.12 오늘 화면: 오늘의 놀이·도서 카드, 분리된 타이머, 보고 ===== */
+const BRX=['흥미 있게 끝까지 봤어요','조금 보다 말았어요','관심이 적었어요'];
+const KINDN={play:'놀이',book:'도서',tool:'도구 놀이'};
+const PK_KEY='dpn_pick',TM_KEY='dpn_timer';
+function pickLoad(){try{const o=JSON.parse(localStorage.getItem(PK_KEY)||'{}');return o.date===today()?o:{date:today()}}catch(e){return{date:today()}}}
+let PICK=pickLoad();
+function pickSave(){try{localStorage.setItem(PK_KEY,JSON.stringify(PICK))}catch(e){}}
+const toolById=id=>(TOOLS.tools||[]).find(t=>t.id===id);
+const bookPool=()=>{const mo=ageFloat();return (TOOLS.tools||[]).filter(t=>t.track==='A'&&t.cat==='book'&&inShow(t,mo))};
+const itemList=kind=>kind==='play'?ranked():bookPool();
+const itemTitle=(kind,id)=>{if(kind==='play'){const c=cardById(id);return c?c.t:''}const t=toolById(id);return t?t.name:''};
+function recPlayId(){
+  const recent=new Set(S.plays.filter(p=>p.date>=dayAgo(5)).map(p=>p.card));
+  let pool=ranked().filter(c=>!recent.has(c.id));if(pool.length<4)pool=ranked();
+  const top=pool.slice(0,6);return top.length?top[dayNum()%top.length].id:null;
 }
+function recBookId(){
+  const pool=bookPool();if(!pool.length)return null;
+  const recent=new Set(S.plays.filter(p=>p.date>=dayAgo(5)&&p.kind==='book').map(p=>p.card));
+  let c=pool.filter(t=>!recent.has(t.id));if(!c.length)c=pool;
+  return c[dayNum()%c.length].id;
+}
+/* 오늘 무엇을 보여 줄지: 시작해서 잠근 것 > (엄마 지시보다 늦게) 내가 고른 것 > 엄마 지시 > 시스템 추천. 새로고침해도 그대로 */
+function resolveItem(kind){
+  if(PICK.date!==today())PICK={date:today()};
+  const lock=PICK[kind+'Lock'],pid=PICK[kind+'Id'],pts=PICK[kind+'Ts']||0;
+  const valid=id=>!!id&&(kind==='play'?!!cardById(id):!!toolById(id));
+  const asId=kind==='play'?S.assign[today()]:S.assignBook[today()],ats=S.assignTs[today()]||0;
+  if(valid(pid)&&(lock||!asId||pts>ats))return{id:pid,why:'mine'};
+  if(valid(asId))return{id:asId,why:'mom'};
+  return{id:kind==='play'?recPlayId():recBookId(),why:'rec'};
+}
+function pickToday(){return resolveItem('play').id}
+function selectItem(kind,id,toTop){
+  PICK[kind+'Id']=id;PICK[kind+'Ts']=Date.now();PICK[kind+'Lock']=false;pickSave();
+  E.cardId=resolveItem('play').id;render();
+  if(toTop)scrollTopSoon();
+}
+let NAV_BUSY=false;
+function navItem(kind,n,fromDrag){
+  const list=itemList(kind);if(list.length<2)return;
+  const cur=resolveItem(kind).id;let i=list.findIndex(x=>x.id===cur);if(i<0)i=0;
+  const j=(i+n+list.length)%list.length,el=document.getElementById('card-'+kind);
+  const go=()=>{NAV_BUSY=false;selectItem(kind,list[j].id);const ne=document.getElementById('card-'+kind);if(ne){ne.classList.add(n>0?'enter-r':'enter-l');ne.addEventListener('animationend',()=>ne.classList.remove('enter-r','enter-l'),{once:true})}};
+  if(NAV_BUSY)return;NAV_BUSY=true;
+  if(el&&!fromDrag){el.style.transition='transform .2s ease-in,opacity .2s';el.style.transform=`translateX(${n>0?-120:120}%) rotate(${n>0?-9:9}deg)`;el.style.opacity='0';setTimeout(go,200)}else go();
+}
+const pickBtn=(kind,id,curId)=>id===curId?'<span class="pickbtn picked">선택됨</span>':`<button class="btn ghost sm pickbtn" data-pick="${kind}:${id}">고르기</button>`;
+
+/* ---------- 타이머: 화면과 분리. 새로고침해도 이어서 간다 (끝나는 시각을 저장) ---------- */
+function timerLoad(){try{const o=JSON.parse(localStorage.getItem(TM_KEY)||'null');return o&&o.end?o:null}catch(e){return null}}
+let TM=timerLoad(),TICK=null,FIN=null,AC=null,WL=null;
+function timerSave(){try{TM?localStorage.setItem(TM_KEY,JSON.stringify(TM)):localStorage.removeItem(TM_KEY)}catch(e){}}
+const remainSec=()=>Math.max(0,Math.ceil((TM.end-Date.now())/1000));
+function unlockAudio(){try{AC=AC||new (window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}}
+function askNotify(){try{if('Notification' in window&&Notification.permission==='default')Notification.requestPermission()}catch(e){}}
+async function wakeOn(){try{if(navigator.wakeLock&&!WL)WL=await navigator.wakeLock.request('screen')}catch(e){}}
+function wakeOff(){try{if(WL){WL.release();WL=null}}catch(e){}}
+function alarm(){
+  try{navigator.vibrate&&navigator.vibrate([300,150,300,150,700])}catch(e){}
+  try{
+    unlockAudio();if(AC){[0,.4,.8].forEach((t,i)=>{const o=AC.createOscillator(),g=AC.createGain(),at=AC.currentTime+t;o.frequency.value=i===2?988:784;o.connect(g);g.connect(AC.destination);g.gain.setValueAtTime(.0001,at);g.gain.exponentialRampToValueAtTime(.4,at+.03);g.gain.exponentialRampToValueAtTime(.0001,at+.32);o.start(at);o.stop(at+.34)})}
+  }catch(e){}
+  try{
+    if('Notification' in window&&Notification.permission==='granted'&&TM){
+      const o={body:TM.title+' · 고생했어요! 앱을 열어 엄마에게 보고해 주세요.',icon:'icons/icon-192.png',tag:'dpn-timer',vibrate:[200,100,200]};
+      if(navigator.serviceWorker&&navigator.serviceWorker.ready)navigator.serviceWorker.ready.then(r=>r.showNotification('시간이 끝났어요',o));else new Notification('시간이 끝났어요',o);
+    }
+  }catch(e){}
+}
+function ensureTick(){if(!TICK)TICK=setInterval(timerTick,1000);timerTick()}
+function paintBar(){
+  const bar=document.getElementById('minibar');if(!bar)return;
+  if(!TM){bar.hidden=true;document.body.classList.remove('hasbar');return}
+  const done=TM.state==='done';
+  bar.hidden=false;document.body.classList.add('hasbar');bar.classList.toggle('done',done);
+  bar.querySelector('.mb-title').textContent=TM.title;
+  bar.querySelector('.mb-sub').textContent=done?'시간이 끝났어요':KINDN[TM.kind]+' 진행 중';
+  bar.querySelector('.mb-time').textContent=done?'끝!':fmt(remainSec());
+  bar.querySelector('[data-mbend]').textContent=done?'보고하기':'끝내기';
+}
+function timerTick(){
+  if(!TM){clearInterval(TICK);TICK=null;paintBar();return}
+  if(TM.state==='running'&&Date.now()>=TM.end){TM.state='done';timerSave();alarm();wakeOff();paintBar();render();openFinish();return}
+  paintBar();
+}
+function startSession(kind,id){
+  if(TM){toast('진행 중인 활동을 먼저 끝내 주세요.');return}
+  const title=itemTitle(kind==='tool'?'tool':kind,id);if(!title)return;
+  if(kind!=='tool'){PICK[kind+'Id']=id;PICK[kind+'Ts']=Date.now();PICK[kind+'Lock']=true;pickSave()}
+  const now=Date.now();
+  TM={kind,id,title,mins:E.mins,start:now,end:now+E.mins*60000,state:'running'};timerSave();
+  unlockAudio();askNotify();wakeOn();ensureTick();render();
+  toast(E.mins+'분 시작! 화면을 켜 두면 끝날 때 알려드려요.');
+}
+function openFinish(){
+  if(!TM)return;
+  const el=Math.max(1,Math.round((Math.min(Date.now(),TM.end)-TM.start)/60000));
+  FIN={rx:null,bk:null,mins:TM.state==='done'?TM.mins:el};
+  sheetShow(finishHTML(),'fin');
+}
+function finishHTML(){
+  const t=TM,kind=t.kind,done=t.state==='done';
+  const rxl=kind==='book'?BRX:RX;
+  const q=kind==='play'?(cardById(t.id)||{}).q:kind==='book'?'아이가 그림을 가리키거나 말한 횟수는?':'아이가 따라 한 횟수는?';
+  return `<div class="sheet-grab"></div><h2>${done?'시간이 끝났어요! 고생했어요 🎉':'여기까지 할까요?'}</h2>
+  <p class="muted">${esc(t.title)} · ${FIN.mins}분</p>
+  <div class="q">${kind==='book'?'책에 대한 흥미':'아이 반응'} (선택)</div>
+  <div class="seg wide col">${rxl.map((n,i)=>`<button data-frx="${i}" aria-pressed="${FIN.rx===i}">${esc(n)}</button>`).join('')}</div>
+  <div class="q">${esc(q||'')} (선택)</div>
+  <div class="seg wide">${BK.map((n,i)=>`<button data-fbk="${i}" aria-pressed="${FIN.bk===i}">${esc(n)}</button>`).join('')}</div>
+  <div class="fin-actions"><button class="btn big" data-fin="report">엄마에게 보고하기</button><button class="btn ghost" data-fin="save">기록만 하기</button></div>
+  <div class="row between" style="margin-top:8px"><button class="link" data-fin="later">${done?'나중에':'계속하기'}</button>${done?'':'<button class="link" data-fin="cancel">기록 없이 끝내기</button>'}</div>
+  ${E.local?'<p class="muted" style="margin-top:8px">지금은 이 기기의 엄마 화면에만 보고돼요. 가족 연결 후에는 엄마 폰으로 알림이 가요.</p>':''}`;
+}
+function repRes(p){
+  const a=p.kind==='book'?(p.i!=null?BRX[p.i]:''):(p.r!=null?RX[p.r]:'');
+  return [a,p.b!=null?BK[p.b]:''].filter(Boolean).join(' · ');
+}
+async function finishSession(report){
+  if(!TM||!FIN)return;
+  const t=TM,f=FIN,ts=Date.now();
+  const rec={card:t.id,kind:t.kind,t:t.title,mins:f.mins,ts,date:today()};
+  if(t.kind==='book'){if(f.rx!=null)rec.i=f.rx}else{if(f.rx!=null)rec.r=f.rx}
+  if(f.bk!=null)rec.b=f.bk;
+  S.plays.unshift(Object.assign({id:'p'+ts},rec));
+  TM=null;FIN=null;timerSave();wakeOff();sheetHide();paintBar();E.tab=E.tab==='mom'?'mom':'dad';render();scrollTopSoon();
+  toast(report?'고생했어요! 엄마에게 보고했어요.':'고생했어요! 기록했어요.');
+  if(report){const res=repRes(rec);await sendMsg('report',`오늘 ${KINDN[t.kind]} ${f.mins}분 완료: ${t.title}${res?' · '+res:''}`,'',true)}
+  try{await put('plays/p'+ts,rec)}catch(e){}
+}
+function cancelSession(){TM=null;FIN=null;timerSave();wakeOff();sheetHide();paintBar();render()}
+
+/* ---------- 시트(아래에서 올라오는 창 / 전체 화면 도감) ---------- */
+function sheetShow(html,cls){const s=document.getElementById('sheet');s.className=cls||'';s.innerHTML=`<div class="sheet-bg" data-sheetclose></div><div class="sheet-body">${html}</div>`;s.hidden=false;document.body.classList.add('noscroll')}
+function sheetHide(){const s=document.getElementById('sheet');s.hidden=true;s.innerHTML='';s.className='';document.body.classList.remove('noscroll')}
+const sheetOpen=()=>!document.getElementById('sheet').hidden;
+
+/* ---------- 오늘의 놀이·도서 카드 (뒤에 카드가 겹쳐 있고, 좌우로 넘기면 움직인다) ---------- */
+function missionCard(kind){
+  const P=resolveItem(kind);
+  if(!P.id)return kind==='book'?`<section class="card"><div class="eyebrow">오늘의 도서</div><p class="muted" style="margin-top:6px">${(TOOLS.tools||[]).length?'이 월령에 맞는 도서가 아직 없어요.':'도서 목록을 불러오는 중이에요…'}</p></section>`:'';
+  const list=itemList(kind),idx=Math.max(0,list.findIndex(x=>x.id===P.id)),nxt=list.length>1?list[(idx+1)%list.length]:null;
+  const active=!!TM&&TM.kind===kind&&TM.id===P.id,busy=!!TM;
+  const doneMin=S.plays.filter(p=>p.date===today()&&(p.kind||'play')===kind).reduce((s,p)=>s+p.mins,0);
+  const isRecId=P.id===(kind==='play'?recPlayId():recBookId()),why=P.why==='mine'&&isRecId?'rec':P.why;
+  const tag={rec:'추천',mom:'엄마 지시',mine:'내가 고름'}[why];
+  let title,chips,body,extra='',alt='';
+  if(kind==='play'){
+    const c=cardById(P.id);title=c.t;
+    chips=c.doms.map(d=>`<span class="chip ${DOM[d].c}">${DOM[d].n}</span>`).join('')+`<span class="src">${esc(c.src)}</span>`;
+    body=`<ol class="steps">${c.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`;
+    if(E.mins===30)extra=`<div class="extra"><b>30분 확장</b> ${esc(c.x30)}</div>`;
+  }else{
+    const t=toolById(P.id);title=t.name;
+    chips=`<span class="chip">${t.type==='named'?'실제 도서':'도서 유형'}</span><span class="src">${esc(srcLabel(t.src))} · ${esc(RELN[t.rel]||t.rel)}</span>`;
+    body=`<ol class="steps"><li>${esc(t.tip&&t.tip!=='—'?t.tip:'아이와 함께 그림을 보며 읽어요')}</li></ol>${t.note?`<p class="tmeta">${esc(t.note)}</p>`:''}`;
+    if(t.type==='named'&&t.avail==='unverified')alt='<p class="tmeta">구입·대출 가능 여부는 확인되지 않았어요. 도서관에서 찾아보세요.</p>';
+  }
+  const label=active?'진행 중…':busy?'다른 활동 진행 중':`이걸로 하기 · ${E.mins}분 시작`;
+  const inner=`<section class="mcard" id="card-${kind}" data-kind="${kind}">
+    <div class="navrow"><button class="navbtn" data-cnav="${kind}:-1" aria-label="이전" ${list.length<2?'disabled':''}>‹</button>
+      <div class="navmid"><span class="eyebrow">${kind==='play'?'오늘의 놀이':'오늘의 도서'}</span><span class="navcount">${idx+1} / ${list.length} · ${tag}</span></div>
+      <button class="navbtn" data-cnav="${kind}:1" aria-label="다음" ${list.length<2?'disabled':''}>›</button></div>
+    <div class="row between" style="margin-top:8px">${doneMin?`<span class="status ok">${doneMin}분 완료</span>`:'<span class="status todo">아직 안 함</span>'}${why==='rec'?'':`<button class="link" data-crec="${kind}">추천으로 돌아가기</button>`}</div>
+    <h1 class="order">${esc(title)}</h1>
+    <div class="chips">${chips}</div>${body}${alt}${extra}
+    <div class="mfoot"><div class="seg" role="group" aria-label="시간"><button data-mins="15" aria-pressed="${E.mins===15}">15분</button><button data-mins="30" aria-pressed="${E.mins===30}">30분</button></div>
+      <button class="btn go" data-start="${kind}" ${busy?'disabled':''}>${label}</button></div>
+  </section>`;
+  return `<div class="stack" data-kind="${kind}">${list.length>2?'<div class="behind b2"></div>':''}${nxt?`<div class="behind b1"><span>다음 · ${esc(kind==='play'?nxt.t:nxt.name)}</span></div>`:''}${inner}</div>`;
+}
+
+/* ---------- 발달 체크인: 요즘 이걸 잘 하나요? (3주 넘게 안 물어본 항목을 하루 최대 3개) ---------- */
+function ckLoad(){try{const o=JSON.parse(localStorage.getItem('dpn_ck')||'{}');return o.date===today()?o:{date:today(),n:0,skip:false}}catch(e){return{date:today(),n:0,skip:false}}}
+function ckSave(o){try{localStorage.setItem('dpn_ck',JSON.stringify(o))}catch(e){}}
+function ckCandidate(){const now=Date.now(),c=MS.filter(m=>{const r=S.ms[m.id];return !r||!r.at||now-r.at>21*864e5});return c.length?c[dayNum()%c.length]:null}
+function checkinCard(){
+  if(!E.cfgSet)return '';
+  const ck=ckLoad();if(ck.skip||ck.n>=3)return '';
+  const m=ckCandidate();if(!m)return '';
+  return `<section class="card" id="ckcard"><div class="eyebrow">발달 체크인 · ${CURSET}개월</div><p class="ckq">요즘 이거 잘 하나요?</p><h2 style="margin:2px 0">${esc(m.t)}</h2><p class="muted">${esc(m.how)}</p>
+    <div class="seg wide" style="margin-top:10px">${LV.map((n,i)=>`<button data-ckin="${m.id}:${i}">${n}</button>`).join('')}</div>
+    <div style="margin-top:6px;text-align:right"><button class="link" data-cklater>나중에</button></div></section>`;
+}
+
+/* ---------- 도감: 전체 화면 시트. 탭(놀이·도서·도구) + 필터 칩 + 2열 카드 → 눌러서 자세히 → 고르기 ---------- */
+const DOMF=Object.keys(DOM).map(d=>[d,DOM[d].n]);
+function libFilters(){
+  const t=E.lib.tab;
+  if(t==='play')return [['all','전체'],['rec','추천'],...DOMF,['new','안 해 본 놀이'],['often','자주 한 놀이']];
+  if(t==='book')return [['all','전체'],['named','실제 도서명'],['generic','도서 유형']];
+  return [['all','전체'],...Object.keys(CATN).filter(c=>c!=='book').map(c=>[c,CATN[c]])];
+}
+function libItems(){
+  const L=E.lib,mo=ageFloat(),T=TOOLS.tools||[];
+  if(L.tab==='play'){
+    let list=L.all?CARDS.filter(c=>DRAFT()||c.ready!==false):cardPool();
+    const {byCard}=playStats(60);
+    if(L.filter==='rec'){const ids=new Set(recommend(15).map(r=>r.c.id));list=list.filter(c=>ids.has(c.id))}
+    else if(DOM[L.filter])list=list.filter(c=>c.doms.includes(L.filter));
+    else if(L.filter==='new')list=list.filter(c=>!(byCard[c.id]||[]).length);
+    else if(L.filter==='often')list=list.filter(c=>(byCard[c.id]||[]).length>=2);
+    return list.map(c=>({kind:'play',id:c.id,title:c.t,doms:c.doms,meta:`${c.age[0]}~${Math.min(c.age[1],72)}개월`}));
+  }
+  const A=T.filter(t=>t.track==='A'&&(L.all||inShow(t,mo)));
+  if(L.tab==='book'){
+    let l=A.filter(t=>t.cat==='book');
+    if(L.filter==='named')l=l.filter(t=>t.type==='named');else if(L.filter==='generic')l=l.filter(t=>t.type==='generic');
+    return l.map(t=>({kind:'book',id:t.id,title:t.name,meta:`${t.show[0]}~${t.show[1]}개월`}));
+  }
+  let l=A.filter(t=>t.cat!=='book');if(CATN[L.filter])l=l.filter(t=>t.cat===L.filter);
+  return l.map(t=>({kind:'tool',id:t.id,title:t.name,meta:`${CATN[t.cat]} · ${t.show[0]}~${t.show[1]}개월`}));
+}
+function libHTML(){
+  const L=E.lib;if(L.sel)return libDetail();
+  const items=libItems(),tabs=[['play','놀이'],['book','도서'],['tool','도구']];
+  return `<div class="lib-top"><b>도감</b><button class="xbtn" data-libclose aria-label="닫기">✕</button></div>
+  <div class="seg wide lib-tabs">${tabs.map(t=>`<button data-ltab="${t[0]}" aria-pressed="${L.tab===t[0]}">${t[1]}</button>`).join('')}</div>
+  <div class="chiprow">${libFilters().map(f=>`<button class="fchip" data-lfilter="${f[0]}" aria-pressed="${L.filter===f[0]}">${esc(f[1])}</button>`).join('')}</div>
+  <div class="lib-opt"><label><input type="checkbox" data-lall ${L.all?'checked':''}> 다른 월령도 보기</label><span class="muted">${items.length}개</span></div>
+  <div class="tiles">${items.map(it=>`<button class="tile" data-ltile="${it.kind}:${it.id}"><b>${esc(it.title)}</b>${it.doms?`<span class="dots">${it.doms.map(d=>`<i class="${DOM[d].c}"></i>`).join('')}</span>`:''}<small>${esc(it.meta)}</small></button>`).join('')||'<p class="muted" style="grid-column:1/-1">조건에 맞는 항목이 없어요.</p>'}</div>`;
+}
+function libDetail(){
+  const {kind,id}=E.lib.sel;let h='',btn='';
+  if(kind==='play'){
+    const c=cardById(id);
+    h=`<h2 class="order" style="font-size:24px">${esc(c.t)}</h2><div class="chips">${c.doms.map(d=>`<span class="chip ${DOM[d].c}">${DOM[d].n}</span>`).join('')}<span class="src">${esc(c.src)} · ${c.age[0]}~${Math.min(c.age[1],72)}개월</span></div>
+    <ol class="steps">${c.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol><div class="extra"><b>30분 확장</b> ${esc(c.x30)}</div>`;
+    btn='오늘의 놀이로 고르기';
+  }else{
+    const t=toolById(id),bs=(TOOLS.tools||[]).filter(b=>b.track==='B'&&b.of===t.id);
+    h=`<h2 class="order" style="font-size:22px">${esc(t.name)}</h2><div class="chips"><span class="chip">${CATN[t.cat]}</span><span class="src">${esc(srcLabel(t.src))} · ${esc(RELN[t.rel]||t.rel)} · ${t.show[0]}~${t.show[1]}개월</span></div>
+    ${t.tip&&t.tip!=='—'?`<p style="margin:10px 0">${esc(t.tip)}</p>`:''}
+    <p class="tmeta">근거 월령: ${esc(t.mo_src)}${t.note?' · '+esc(t.note):''}</p>
+    ${ageFloat()<36?'<p class="tnote" style="margin-top:8px">36개월 미만은 작은 부품이 없는 도구만 써요.</p>':''}
+    ${bs.length?`<div class="tcat">엄마들이 많이 쓰는 예</div>${bs.map(b=>`<div class="bitem"><b>${esc(b.name)}</b> <span class="tag">${esc(RELN[b.rel]||b.rel)}</span>${b.flags.map(f=>`<span class="tag warn">${esc(FLAGN[f]||f)}</span>`).join('')}${b.limits?`<div class="tmeta">사용 한계: ${esc(b.limits)}</div>`:''}</div>`).join('')}`:''}`;
+    btn=kind==='book'?'오늘의 도서로 고르기':`이걸로 하기 · ${E.mins}분 시작`;
+  }
+  return `<div class="lib-top"><button class="link" data-libback>‹ 목록</button><button class="xbtn" data-libclose aria-label="닫기">✕</button></div><div class="lib-detail">${h}</div>
+  <div class="sheet-bar"><button class="btn big" data-libpick>${btn}</button></div>`;
+}
+function openLib(tab){E.lib={tab:tab||'play',filter:'all',all:false,sel:null};sheetShow(libHTML(),'full')}
+function libRender(){const b=document.querySelector('#sheet .sheet-body');if(!b||!E.lib)return;const y=b.scrollTop;b.innerHTML=libHTML();b.scrollTop=E.lib.sel?0:y}
+function sheetClick(e){
+  const t=e.target.closest('[data-sheetclose],[data-libclose],[data-ltab],[data-lfilter],[data-ltile],[data-libback],[data-libpick],[data-frx],[data-fbk],[data-fin]');if(!t)return;
+  const d=t.dataset;
+  if('libclose' in d||('sheetclose' in d&&E.lib)){E.lib=null;sheetHide();return}
+  if('sheetclose' in d){if(TM&&FIN){sheetHide()}return}
+  if(d.ltab){E.lib.tab=d.ltab;E.lib.filter='all';libRender();return}
+  if(d.lfilter){E.lib.filter=d.lfilter;libRender();return}
+  if(d.ltile){const [k,...r]=d.ltile.split(':');E.lib.sel={kind:k,id:r.join(':')};libRender();return}
+  if('libback' in d){E.lib.sel=null;libRender();return}
+  if('libpick' in d){
+    const {kind,id}=E.lib.sel;E.lib=null;sheetHide();
+    if(kind==='tool'){startSession('tool',id)}else{selectItem(kind,id,true);toast('오늘의 '+KINDN[kind]+'로 골랐어요.')}
+    return;
+  }
+  if(d.frx!==undefined&&FIN){FIN.rx=FIN.rx===Number(d.frx)?null:Number(d.frx);const b=document.querySelector('#sheet .sheet-body');b.innerHTML=finishHTML();return}
+  if(d.fbk!==undefined&&FIN){FIN.bk=FIN.bk===Number(d.fbk)?null:Number(d.fbk);const b=document.querySelector('#sheet .sheet-body');b.innerHTML=finishHTML();return}
+  if(d.fin){
+    if(d.fin==='report')finishSession(true);else if(d.fin==='save')finishSession(false);
+    else if(d.fin==='cancel')cancelSession();else sheetHide();
+  }
+}
+
 /* ---------- 추천: 최근 2주 놀이 기록 + 이정표 체크 + 아이 반응으로 '더 해볼 놀이'를 고른다 ---------- */
 function playStats(days){
   const since=dayAgo(days),dom={soc:0,lang:0,cog:0,mov:0},byCard={};
@@ -827,7 +1130,7 @@ function playStats(days){
 function recommend(n){
   const {dom,byCard}=playStats(14),vals=Object.values(dom),mean=vals.reduce((a,b)=>a+b,0)/vals.length;
   const cur=new Set(MS.map(m=>m.id));
-  return cardPool().filter(c=>c.id!==E.cardId).map(c=>{
+  return cardPool().filter(c=>c.id!==resolveItem('play').id).map(c=>{
     let sc=0;const why=[];
     const open=c.ms.filter(id=>cur.has(id)&&lv(id)<2).sort((a,b)=>lv(a)-lv(b));
     if(open.length){sc+=open.reduce((a,id)=>a+(2-lv(id)),0)*2;why.push(`'${MSBY[open[0]].t.split(' (')[0]}' 항목이 아직이에요`)}
@@ -844,13 +1147,14 @@ function recommend(n){
     return{c,sc,why:why.slice(0,2)};
   }).sort((a,b)=>b.sc-a.sc||CARDS.indexOf(a.c)-CARDS.indexOf(b.c)).slice(0,n);
 }
-function recFold(c){
+function recFold(){
+  const c=cardById(resolveItem('play').id)||{id:''};
   const list=recommend(3);if(!list.length)return '';
   const {dom}=playStats(14),total=Object.values(dom).reduce((a,b)=>a+b,0);
   const bal=Object.keys(DOM).map(d=>`<span class="${DOM[d].c}">${DOM[d].n} ${dom[d]}</span>`).join(' · ');
   return `<details class="fold" data-k="rec"${isOpen('rec',true)?' open':''}><summary><span>더 해볼 놀이 추천<span class="sub">${total?'최근 2주 기록 기준':'기록이 쌓이면 정확해져요'}</span></span></summary><div class="fbody">
     <p class="muted">최근 2주 영역별 놀이: ${bal}</p>
-    ${list.map(r=>`<div class="rec"><div class="pickrow"><b>${esc(r.c.t)}</b>${pickBtn(r.c.id,c.id)}</div><span class="why">${r.why.length?esc(r.why.join(' · ')):'다양하게 해 보기'}</span></div>`).join('')}</div></details>`;
+    ${list.map(r=>`<div class="rec"><div class="pickrow"><b>${esc(r.c.t)}</b>${pickBtn('play',r.c.id,c.id)}</div><span class="why">${r.why.length?esc(r.why.join(' · ')):'다양하게 해 보기'}</span></div>`).join('')}</div></details>`;
 }
 
 /* ---------- 0~36개월 도구·책 데이터 (data/tools.json): 트랙 A(공공·의학 기관)가 뼈대, 트랙 B(엄마들 후기)는 A 유형 아래 '엄마들이 많이 쓰는 예' ---------- */
@@ -884,42 +1188,15 @@ function safetyFold(){
     ${L.filter(x=>x.kind!=='avoid').map(x=>`<div class="srule">${esc(x.text)}<span class="tmeta"> · ${esc(srcLabel(x.src))}</span></div>`).join('')}</div></details>`;
 }
 function viewDad(){
-  const order=ranked();
-  if(!E.picked)E.cardId=pickToday();
-  const c=cardById(E.cardId),done=minsOn(today()),mom=S.assign[today()]===c.id;
-  const dis=E.canWrite?'':' disabled';
-  const navIdx=Math.max(0,order.findIndex(x=>x.id===c.id)),isRec=!E.picked||c.id===pickToday();
-  return setupCard()+inboxCard()+`
-  <section class="hero" id="herocard">
-    <div class="navrow"><button class="navbtn" data-cnav="-1" aria-label="이전 놀이">‹</button><div class="navmid"><span class="eyebrow">오늘의 놀이${mom?' · 엄마 지시':''}</span><span class="navcount">${navIdx+1} / ${order.length}${isRec?' · 추천':' · 내가 고름'}</span></div><button class="navbtn" data-cnav="1" aria-label="다음 놀이">›</button></div>
-    <div class="row between" style="margin-top:10px"><span class="status ${done?'ok':'todo'}">${done?done+'분 완료':'아직 안 함'}</span>${isRec?'':'<button class="link" data-crec>추천 놀이로 돌아가기</button>'}</div>
-    <h1 class="order">${esc(c.t)}</h1>
-    <div class="chips">${c.doms.map(d=>`<span class="chip ${DOM[d].c}">${DOM[d].n}</span>`).join('')}<span class="src">${esc(c.src)}</span></div>
-    <ol class="steps">${c.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>
-    ${E.mins===30?`<div class="extra"><b>30분 확장</b> ${esc(c.x30)}</div>`:''}
-    <div class="row between" style="margin-top:18px"><div class="seg" role="group" aria-label="시간"><button data-mins="15" aria-pressed="${E.mins===15}">15분</button><button data-mins="30" aria-pressed="${E.mins===30}">30분</button></div><button class="link" id="treset">처음으로</button></div>
-    <div class="timerbar"><div class="timer" id="timer">${fmt(E.left)}</div><button class="btn go" id="tgo">${E.running?'일시정지':(E.left<E.mins*60?'계속':'시작')}</button></div>
-  </section>
-  ${recFold(c)}
-  ${itemsFold(c)}
+  const P=resolveItem('play');E.cardId=P.id;
+  const c=cardById(P.id);
+  return setupCard()+inboxCard()+missionCard('play')+missionCard('book')+checkinCard()+`
+  <button class="card libcard" data-openlib><span><b>놀이·도서·도구 도감</b><small>${CARDS.length}개 놀이 · ${(TOOLS.tools||[]).filter(t=>t.track==='A').length}개 도서·도구 · 카테고리별로 보기</small></span><span class="chev">›</span></button>
+  ${recFold()}
+  ${c?itemsFold(c):''}
   ${toolsFold()}
   ${safetyFold()}
-  <section class="card">
-    <h2>다 했으면 보고</h2>
-    <div class="q">아이 반응</div>
-    <div class="seg wide">${RX.map((n,i)=>`<button data-rx="${i}" aria-pressed="${E.rx===i}"${dis}>${n}</button>`).join('')}</div>
-    <div class="q">${esc(c.q)}</div>
-    <div class="seg wide">${BK.map((n,i)=>`<button data-bk="${i}" aria-pressed="${E.bk===i}"${dis}>${n}</button>`).join('')}</div>
-    <div style="margin-top:16px"><button class="btn big" id="rec"${dis}>임무 완료 (${E.mins}분)</button></div>
-    ${E.canWrite?'':'<p class="muted" style="margin-top:8px">보기 전용 계정입니다.</p>'}
-  </section>
-  ${E.local?'':`<details class="fold" data-k="tomom"${isOpen('tomom',false)?' open':''}><summary>엄마에게 보내기</summary><div class="fbody"><div class="row" style="gap:8px">${MSGS.ask.map((t,i)=>`<button class="btn ghost sm" data-msg="ask:${i}"${dis}>${esc(t)}</button>`).join('')}</div></div></details>`}
-  <details class="fold" data-k="lib"${isOpen('lib',false)?' open':''}><summary><span>놀이 도감<span class="sub">${CARDS.length}개</span></span></summary><div class="fbody">
-    <p class="muted">한 번 한 놀이는 5일 동안 뒤로 밀리고, 아직 못하는 항목과 연결된 놀이가 먼저 나옵니다. 엄마가 지시하면 그 놀이가 우선입니다.</p>
-    ${order.map(x=>`<div class="lib"><div class="pickrow"><b>${esc(x.t)}</b>${pickBtn(x.id,c.id)}</div>
-      <div class="chips">${x.doms.map(d=>`<span class="chip ${DOM[d].c}">${DOM[d].n}</span>`).join('')}<span class="src">${esc(x.src)}</span></div>
-      <ol>${x.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol></div>`).join('')}
-  </div></details>`;
+  ${E.local?'':`<details class="fold" data-k="tomom"${isOpen('tomom',false)?' open':''}><summary>엄마에게 보내기</summary><div class="fbody"><div class="row" style="gap:8px">${MSGS.ask.map((t,i)=>`<button class="btn ghost sm" data-msg="ask:${i}"${E.canWrite?'':' disabled'}>${esc(t)}</button>`).join('')}</div></div></details>`}`;
 }
 function viewCheck(){
   const dis=E.canWrite?'':' disabled';
@@ -1023,9 +1300,11 @@ function viewMom(){
   const thread=S.msgs.slice(0,8);
   h+=`<details class="fold" data-k="thread"${isOpen('thread',false)?' open':''}><summary><span>주고받은 메시지<span class="sub">${thread.length}건</span></span></summary><div class="fbody">${thread.length?`<div class="msgbox">${thread.map(m=>`<div class="msg ${m.kind}"><span class="by">${m.from==='mom'?'엄마':'아빠'}</span>${esc(m.text)}<small>${fdt(m.ts)}</small></div>`).join('')}</div>`:'<p class="muted">아직 없어요.</p>'}</div></details>`;
   h+=`<details class="fold" data-k="msv"${isOpen('msv',false)?' open':''}><summary>항목별 현황<span class="sub">잘함 ${n2} · 가끔 ${n1} · 아직 ${n0}</span></summary><div class="fbody"><div class="msgrid">${MS.map(m=>`<div><span>${esc(m.t.split(' (')[0])}</span><span class="pill lv${lv(m.id)}">${LV[lv(m.id)]}</span></div>`).join('')}</div></div></details>`;
-  h+=`<details class="fold" data-k="rep"${isOpen('rep',false)?' open':''}><summary>최근 아빠 보고</summary><div class="fbody" style="gap:0">${S.plays.length?S.plays.slice(0,6).map(p=>{const c=cardById(p.card);return `<div class="erow"><span>${esc(p.date)} · ${esc(c?c.t:p.card)} · ${p.mins}분</span><span class="muted">${p.r!=null?RX[p.r]:''}</span></div>`}).join(''):'<p class="muted">아직 보고가 없습니다.</p>'}</div></details>`;
-  const cur=S.assign[today()];
-  h+=`<details class="fold" data-k="asg"${isOpen('asg',false)?' open':''}><summary><span>오늘 놀이 지시하기${cur?`<span class="sub">${esc(cardById(cur)?cardById(cur).t:'')}</span>`:''}</span></summary><div class="fbody"><p class="muted">고르면 아빠 화면에 "엄마 지시"로 뜨고 먼저 나옵니다.</p><div class="msglist" style="margin-top:0">${cardPool().map(c=>`<button class="btn ghost" data-assign="${c.id}"${dis}>${esc(c.t)}${cur===c.id?' ✓':''}</button>`).join('')}</div></div></details>`;
+  h+=`<details class="fold" data-k="rep"${isOpen('rep',false)?' open':''}><summary>최근 아빠 보고</summary><div class="fbody" style="gap:0">${S.plays.length?S.plays.slice(0,6).map(p=>{const c=cardById(p.card);return `<div class="erow"><span>${esc(p.date)} · ${KINDN[p.kind||'play']} · ${esc(p.t||(c?c.t:p.card))} · ${p.mins}분</span><span class="muted">${esc(repRes(p))}</span></div>`}).join(''):'<p class="muted">아직 보고가 없습니다.</p>'}</div></details>`;
+  const cur=S.assign[today()],curB=S.assignBook[today()];
+  h+=`<details class="fold" data-k="asg"${isOpen('asg',false)?' open':''}><summary><span>오늘 놀이·도서 지시하기${cur||curB?`<span class="sub">${esc([cur&&cardById(cur)?cardById(cur).t:'',curB&&toolById(curB)?toolById(curB).name:''].filter(Boolean).join(' · '))}</span>`:''}</span></summary><div class="fbody"><p class="muted">고르면 아빠 화면의 오늘 카드가 "엄마 지시"로 바뀌어요. 아빠가 이미 시작한 건 바뀌지 않아요.</p>
+    <div class="q">놀이</div><div class="msglist" style="margin-top:0">${cardPool().map(c=>`<button class="btn ghost" data-assign="play:${c.id}"${dis}>${esc(c.t)}${cur===c.id?' ✓':''}</button>`).join('')}</div>
+    <div class="q">도서</div><div class="msglist" style="margin-top:0">${bookPool().map(t=>`<button class="btn ghost" data-assign="book:${t.id}"${dis}>${esc(t.name)}${curB===t.id?' ✓':''}</button>`).join('')||'<p class="muted">도서 목록을 불러오는 중이에요.</p>'}</div></div></details>`;
   let msg;
   if(dd>0)msg=`${tAge1}개월까지 ${dd}일 남았어요. 이 이정표는 "또래 4명 중 3명 이상이 해당 월령까지 하는 행동"이라, 그 전에 못 하는 항목이 있는 건 지연을 뜻하지 않아요. 점수보다 매주 늘어나는 흐름을 보세요.`;
   else if(n0>0)msg=`${CURSET}개월 기준일이 지났고 '아직'인 항목이 ${n0}개 있어요. CDC 안내는 이정표를 못 하거나 하던 걸 못 하게 됐거나 걱정되는 점이 있으면 기다리지 말고 소아과에서 발달 선별검사를 상의하라는 것입니다.`;
@@ -1081,6 +1360,7 @@ function viewConf(){
   <div style="margin-top:12px"><button class="btn" id="fbsend"${dis}>남기기</button></div>
   ${S.fb.length?`<div class="msgbox" style="margin-top:16px">${S.fb.slice(0,20).map(f=>{const ft=FEATS.find(x=>x.id===f.feat);return `<div class="msg"><span class="by">${f.by==='mom'?'엄마':'아빠'} · ${esc(ft?ft.t.split(':')[0]:'')} · ${f.done?'반영됨':'대기'}</span>${esc(f.text)}<div class="row between"><small>${fdt(f.ts)}</small><button class="btn ghost sm" data-donefb="${f.id}"${dis}>${f.done?'반영 취소':'반영됨 표시'}</button></div></div>`}).join('')}</div>`:''}</section>`;
   h+=E.local?`<section class="card"><h3>이 기기에만 저장돼요</h3><p class="muted" style="margin-top:4px">컨펌·의견은 이 기기 안에만 남습니다. 개발자에게 의견을 보내려면 ${FEEDBACK_URL?`<a href="${esc(FEEDBACK_URL)}" target="_blank" rel="noopener">의견 보내기</a>를 이용해 주세요.`:'안내받은 방법(메신저·댓글)으로 알려 주세요.'}</p></section>`:`<details class="fold" data-k="inv"${isOpen('inv',false)?' open':''}><summary>엄마 초대 방법</summary><div class="fbody"><ol style="margin:0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:4px"><li>이 페이지 공유 메뉴를 연다</li><li>엄마 이메일로 초대한다</li><li>권한은 "기여자"로 한다 (보기만이면 컨펌·메시지를 못 보낸다)</li><li>엄마는 링크를 열고 "엄마"를 한 번 고른다</li></ol></div></details>`;
+  if(E.local)h+=`<section class="card"><h3>내 역할</h3><p class="muted" style="margin:4px 0 8px">이 기기에서 누구로 쓸지 바꿔요. 아빠는 놀이·체크·성장, 엄마는 엄마의 눈·체크·성장 탭이 보여요.</p><div class="seg wide"><button data-myrole="dad" aria-pressed="${E.role!=='mom'}">아빠</button><button data-myrole="mom" aria-pressed="${E.role==='mom'}">엄마</button></div></section>`;
   if(E.local)h+=`<p style="text-align:center;margin-top:8px"><button class="link" data-devtoggle="${DEV.on?0:1}">개발자 모드 ${DEV.on?'끄기':'켜기'}</button></p>`;
   h+=`<details class="fold" data-k="chg"${isOpen('chg',false)?' open':''}><summary>변경 이력</summary><div class="fbody">${CHANGES.map(c=>`<div class="chlog"><b>v${c.v}</b> ${c.d}<ul style="margin:2px 0 0;padding-left:18px">${c.l.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`).join('')}</div></details>`;
   return h;
@@ -1103,13 +1383,25 @@ function bind(){
   m.querySelectorAll('[data-gk]').forEach(b=>b.onclick=()=>{E.gk=b.dataset.gk;E.gh=g('gh')?Number(g('gh').value):E.gh;E.gw=g('gw')?Number(g('gw').value):E.gw;render()});
   m.querySelectorAll('[data-mins]').forEach(b=>b.onclick=()=>{E.mins=Number(b.dataset.mins);resetTimer();render()});
   m.querySelectorAll('[data-ms]').forEach(b=>b.onclick=()=>setLevel(b.dataset.ms,Number(b.dataset.lv)));
-  m.querySelectorAll('[data-rx]').forEach(b=>b.onclick=()=>{E.rx=E.rx===Number(b.dataset.rx)?null:Number(b.dataset.rx);render()});
-  m.querySelectorAll('[data-bk]').forEach(b=>b.onclick=()=>{E.bk=E.bk===Number(b.dataset.bk)?null:Number(b.dataset.bk);render()});
-  m.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{E.cardId=b.dataset.pick;E.picked=true;E.rx=null;E.bk=null;resetTimer();render();window.scrollTo({top:0,behavior:'smooth'})});
-  m.querySelectorAll('[data-cnav]').forEach(b=>b.onclick=()=>cardNav(Number(b.dataset.cnav)));
-  m.querySelectorAll('[data-crec]').forEach(b=>b.onclick=()=>{E.picked=false;E.rx=null;E.bk=null;resetTimer();render()});
-  {const hero=g('herocard');if(hero){let x0=null,y0=null;hero.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});hero.addEventListener('touchend',e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0,dy=e.changedTouches[0].clientY-y0;x0=null;if(Math.abs(dx)>70&&Math.abs(dx)>Math.abs(dy)*1.5)cardNav(dx<0?1:-1)},{passive:true})}}
-  m.querySelectorAll('[data-assign]').forEach(b=>b.onclick=()=>assignCard(b.dataset.assign));
+  m.querySelectorAll('[data-pick]').forEach(b=>b.onclick=()=>{const [k,...r]=b.dataset.pick.split(':');selectItem(k,r.join(':'),true);toast('오늘의 '+KINDN[k]+'로 골랐어요.')});
+  m.querySelectorAll('[data-cnav]').forEach(b=>b.onclick=()=>{const [k,n]=b.dataset.cnav.split(':');navItem(k,Number(n))});
+  m.querySelectorAll('[data-crec]').forEach(b=>b.onclick=()=>{const k=b.dataset.crec;PICK[k+'Id']=null;PICK[k+'Lock']=false;if(k==='play')S.assign[today()]=null;else S.assignBook[today()]=null;pickSave();render()});
+  m.querySelectorAll('[data-start]').forEach(b=>b.onclick=()=>startSession(b.dataset.start,resolveItem(b.dataset.start).id));
+  m.querySelectorAll('[data-openlib]').forEach(b=>b.onclick=()=>openLib('play'));
+  m.querySelectorAll('[data-ckin]').forEach(b=>b.onclick=()=>{const [id,l]=b.dataset.ckin.split(':'),ck=ckLoad();ck.n++;ckSave(ck);setLevel(id,Number(l));toast('고마워요! 체크했어요.')});
+  m.querySelectorAll('[data-cklater]').forEach(b=>b.onclick=()=>{const ck=ckLoad();ck.skip=true;ckSave(ck);render()});
+  m.querySelectorAll('.mcard').forEach(el=>{
+    let x0=null,dx=0,pid=null;
+    el.addEventListener('pointerdown',e=>{if(e.target.closest('button,summary,a,input'))return;x0=e.clientX;dx=0;pid=e.pointerId});
+    el.addEventListener('pointermove',e=>{if(x0==null||e.pointerId!==pid)return;dx=e.clientX-x0;if(Math.abs(dx)>8){try{el.setPointerCapture(pid)}catch(_){}el.style.transition='none';el.style.transform=`translateX(${dx}px) rotate(${dx/18}deg)`;el.style.opacity=String(Math.max(.4,1-Math.abs(dx)/420))}});
+    const end=()=>{
+      if(x0==null)return;const d=dx;x0=null;try{el.releasePointerCapture(pid)}catch(_){}
+      if(Math.abs(d)>80){el.style.transition='transform .18s ease-in,opacity .18s';el.style.transform=`translateX(${d>0?120:-120}%) rotate(${d>0?9:-9}deg)`;el.style.opacity='0';setTimeout(()=>navItem(el.dataset.kind,d<0?1:-1,true),160)}
+      else{el.style.transition='transform .22s cubic-bezier(.3,1.4,.5,1),opacity .2s';el.style.transform='';el.style.opacity=''}
+    };
+    el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+  });
+  m.querySelectorAll('[data-assign]').forEach(b=>b.onclick=()=>{const [k,...r]=b.dataset.assign.split(':');assignItem(k,r.join(':'))});
   m.querySelectorAll('[data-ssex]').forEach(b=>b.onclick=()=>{E.ssex=b.dataset.ssex;const i=g('sbirth');if(i)E.sbirth=i.value;const n=g('sname');if(n)E.sname=n.value;render();setupNext()});
   m.querySelectorAll('[data-ex]').forEach(b=>b.onclick=()=>toggleExcl(b.dataset.ex));
   m.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>{
@@ -1128,6 +1420,7 @@ function bind(){
   m.querySelectorAll('[data-msg]').forEach(b=>b.onclick=()=>{const [k,i]=b.dataset.msg.split(':');sendMsg(k,msgText(MSGS[k][Number(i)]))});
   m.querySelectorAll('[data-conf]').forEach(b=>b.onclick=()=>{const [id,st]=b.dataset.conf.split(':');setConf(id,st)});
   m.querySelectorAll('[data-fbfeat]').forEach(b=>b.onclick=()=>{E.fbfeat=b.dataset.fbfeat;const t=g('fbtext');if(t)E.fbtext=t.value;render()});
+  m.querySelectorAll('[data-myrole]').forEach(b=>b.onclick=async()=>{await saveRole(b.dataset.myrole);E.tab=b.dataset.myrole==='mom'?'mom':'dad';render();toast((b.dataset.myrole==='mom'?'엄마':'아빠')+'로 바꿨어요.')});
   m.querySelectorAll('[data-devtoggle]').forEach(b=>b.onclick=()=>devToggleFromUI(b.dataset.devtoggle==='1'));
   m.querySelectorAll('[data-donefb]').forEach(b=>b.onclick=()=>doneFb(b.dataset.donefb));
   if(g('fbtext'))g('fbtext').oninput=e=>{E.fbtext=e.target.value};
@@ -1150,9 +1443,6 @@ function bind(){
     }
     render();scrollTopSoon();
   };
-  if(g('tgo'))g('tgo').onclick=toggleTimer;
-  if(g('treset'))g('treset').onclick=()=>{resetTimer();render()};
-  if(g('rec'))g('rec').onclick=recordPlay;
   if(g('csave'))g('csave').onclick=()=>{const b=E.cbirth||S.cfg.birth;if(pdate(b)>new Date()){toast('생일이 오늘보다 뒤예요.');return}saveCfg({name:g('cname').value.trim()||'우리 아이',birth:b});E.cbirth=''};
 }
 document.addEventListener('focusout',()=>setTimeout(()=>{if(E.pending)render()},0));
@@ -1197,7 +1487,14 @@ function devHTML(){
   h+=`<div class="dv-row" style="margin-top:12px"><button class="btn sm ghost" data-doff>개발자 모드 끄기</button></div>`;
   return h;
 }
+function devSetView(v){
+  DEV.view=v;try{localStorage.setItem('dpn_dev_view',v)}catch(x){}
+  if(v!=='all')E.role=v;else{try{const r=localStorage.getItem('role');E.role=(r==='dad'||r==='mom')?r:'dad'}catch(x){E.role='dad'}}
+  E.picked=false;render();
+}
 function devUpdate(){
+  const dr=document.getElementById('devrole');
+  if(dr){dr.hidden=!DEV.on;if(DEV.on){dr.innerHTML=[['all','전체'],['dad','아빠'],['mom','엄마']].map(x=>`<button class="dvpill" data-dv="${x[0]}" aria-pressed="${DEV.view===x[0]}">${x[1]}</button>`).join('');if(!dr.dataset.bound){dr.dataset.bound='1';dr.addEventListener('click',e=>{const b=e.target.closest('[data-dv]');if(b)devSetView(b.dataset.dv)})}}}
   if(!DEV.on)return;
   let box=document.getElementById('dev');
   if(!box){
@@ -1208,7 +1505,7 @@ function devUpdate(){
       const t=e.target.closest('button,[data-dshift]');if(!t)return;
       if(t.id==='devtog'){E.devOpen=!E.devOpen;devUpdate();return}
       if(t.dataset.dshift){const [u,n]=t.dataset.dshift.split(':');devShift(u,Number(n))}
-      else if(t.dataset.dview){DEV.view=t.dataset.dview;try{localStorage.setItem('dpn_dev_view',DEV.view)}catch(x){}if(DEV.view!=='all')E.role=DEV.view;else{try{const r=localStorage.getItem('role');E.role=(r==='dad'||r==='mom')?r:'dad'}catch(x){E.role='dad'}}E.picked=false;render()}
+      else if(t.dataset.dview){devSetView(t.dataset.dview)}
       else if('ddraft' in t.dataset){DEV.draft=!DEV.draft;try{localStorage.setItem('dpn_dev_draft',DEV.draft?'1':'0')}catch(x){}E.picked=false;render()}
       else if('dreset' in t.dataset){devSetDate(new Date(RealDate.now()))}
       else if('ddate' in t.dataset){const v=document.getElementById('devdate').value;if(v)devSetDate(pdate(v))}
@@ -1282,7 +1579,13 @@ if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)&&typeof clau
 
 /* ---------- 시작 ---------- */
 (async function init(){
-  fromHash();resetTimer();render();loadTools();
+  fromHash();render();loadTools();
+  {let n=0,t0=0;document.getElementById('who').addEventListener('click',()=>{const now=Date.now();if(now-t0>2500)n=0;t0=now;n++;if(n>=7){n=0;if(E.local)devToggleFromUI(!DEV.on)}})}
+  document.getElementById('sheet').addEventListener('click',sheetClick);
+  document.getElementById('sheet').addEventListener('change',e=>{const t=e.target.closest('[data-lall]');if(t&&E.lib){E.lib.all=t.checked;libRender()}});
+  document.getElementById('minibar').addEventListener('click',e=>{if(e.target.closest('[data-mbend]'))openFinish();else window.scrollTo({top:0,behavior:'smooth'})});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){timerTick();if(TM&&TM.state==='running')wakeOn()}});
+  if(TM){ensureTick();if(TM.state==='running'&&Date.now()>=TM.end){TM.state='done';timerSave();paintBar()}if(TM.state==='done')openFinish();else wakeOn()}
   const {db,user}=await getBackend();
   if(!db){render();return}
   E.db=db;
@@ -1300,7 +1603,7 @@ if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)&&typeof clau
   db.collection('plays').orderBy('ts','desc').limit(300).onSnapshot(q=>{S.plays=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},er);
   db.collection('log').orderBy('ts','desc').limit(300).onSnapshot(q=>{S.log=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},er);
   db.collection('body').orderBy('ts','desc').limit(200).onSnapshot(q=>{S.body=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},er);
-  db.collection('assign').onSnapshot(q=>{const o={};q.docs.forEach(d=>{o[d.id]=d.data().cardId});S.assign=o;render()},er);
+  db.collection('assign').onSnapshot(q=>{const o={},ob={},ot={};q.docs.forEach(d=>{const v=d.data();o[d.id]=v.cardId;ob[d.id]=v.bookId;ot[d.id]=v.ts||0});S.assign=o;S.assignBook=ob;S.assignTs=ot;render()},er);
   db.collection('ref').onSnapshot(q=>{const o={};q.docs.forEach(d=>{const r=d.data().rows;if(Array.isArray(r))o[d.id]=r});S.ref=o;render()},er);
   db.collection('msgs').orderBy('ts','desc').limit(60).onSnapshot(q=>{S.msgs=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},er);
   db.collection('conf').onSnapshot(q=>{const o={};q.docs.forEach(d=>o[d.id]=d.data());S.conf=o;render()},er);

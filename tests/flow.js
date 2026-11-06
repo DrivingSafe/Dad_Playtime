@@ -32,12 +32,15 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
  ok(await p.evaluate(()=>S.ms.s1&&S.ms.s1.level===2&&S.log.length===1),'체크 저장 + 로그');
 
  // 놀이 기록
- await p.click('[data-tab="dad"]');await p.click('[data-rx="0"]');await p.click('[data-bk="2"]');await p.click('#rec');await p.waitForTimeout(300);
- ok(await p.evaluate(()=>S.plays.length===1&&S.plays[0].mins===15),'놀이 기록 저장');
+ await p.click('[data-tab="dad"]');await p.click('[data-start="play"]');await p.waitForTimeout(300);
+ ok(await p.evaluate(()=>!!TM&&TM.kind==='play'&&TM.mins===15),'이걸로 하기 → 타이머 시작');
+ await p.evaluate(()=>{TM.end=Date.now()-1;timerTick()});await p.waitForTimeout(400);
+ await p.click('[data-frx="0"]');await p.click('[data-fbk="2"]');await p.click('[data-fin="report"]');await p.waitForTimeout(500);
+ ok(await p.evaluate(()=>S.plays.length===1&&S.plays[0].mins===15&&S.plays[0].kind==='play'&&S.plays[0].r===0&&S.plays[0].b===2&&TM===null),'놀이 기록 저장(보고 시트)');
 
  // 메시지
  ok(!(await p.$('[data-msg="ask:0"]')),'서버 없는 모드에서는 엄마에게 보내기 숨김');await p.evaluate(()=>sendMsg('ask','테스트'));await p.waitForTimeout(200);
- ok(await p.evaluate(()=>S.msgs.length===1&&S.msgs[0].from==='dad'),'메시지 전송');
+ ok(await p.evaluate(()=>S.msgs.length===2&&S.msgs[0].from==='dad'&&S.msgs.some(m=>m.kind==='report')),'보고 메시지 + 메시지 전송');
 
  // 컨펌·의견
  await p.click('[data-tab="conf"]');await p.click('[data-conf]:first-of-type');await p.waitForTimeout(200);
@@ -54,7 +57,7 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
  // 새로고침 후 유지
  await p.reload();await p.waitForTimeout(700);
  const st=await p.evaluate(()=>({n:S.cfg.name,ms:!!S.ms.s1,pl:S.plays.length,m:S.msgs.length,c:Object.keys(S.conf).length,f:S.fb.length,role:E.role}));
- ok(st.n==='하늘'&&st.ms&&st.pl===1&&st.m===1&&st.c===1&&st.f===1&&st.role==='dad','새로고침 후 데이터 유지 '+JSON.stringify(st));
+ ok(st.n==='하늘'&&st.ms&&st.pl===1&&st.m===2&&st.c===1&&st.f===1&&st.role==='dad','새로고침 후 데이터 유지 '+JSON.stringify(st));
 
  // 모든 탭이 오류 없이 렌더
  ok(!(await p.isVisible('[data-tab="mom"]')),'아빠 역할에는 엄마의 눈 탭이 안 보임');

@@ -12,6 +12,8 @@
 | `docs/DATA-SOURCES.md` | 발달 기준·성장 기준 출처와 법적 확인 항목 |
 | `docs/CHANGELOG.md` | 버전별 변경 |
 | `tests/smoke.js` | 생일 휠·백분위 점검(가짜 Artifact 저장소) |
+| `docs/TODAY-FLOW.md` | 오늘 화면 흐름(카드·타이머·보고·도감·체크인) |
+| `tests/session.js` | 오늘 카드·타이머·보고·엄마 지시·도감·체크인·개발자 진입 점검 |
 | `docs/TOOLS-DATA.md` | 0~36개월 도구·책·안전 데이터(`data/tools.json`) 구조와 한계 |
 | `tests/tools.js` | 도구 데이터 무결성·표시 점검 |
 | `docs/PAIRING.md` | 엄마·아빠 연결(매칭) 설계 |
