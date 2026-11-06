@@ -140,12 +140,19 @@ const W=ms=>new Promise(r=>setTimeout(r,ms));
  await p.evaluate(()=>{const k=Object.keys(S.ms)[0];S.ms[k].at=Date.now()-30*864e5;localStorage.removeItem('dpn_ck');render()});await p.waitForTimeout(300);
  ok(await p.evaluate(()=>{const c=ckCandidate();return !!c}),'3주 넘게 안 물어본 항목은 다시 질문 대상');
 
+ // ---- 개발자 진입: 의견 탭 버튼 ----
+ await p.click('[data-tab="conf"]');await p.waitForTimeout(250);
+ ok(await p.evaluate(()=>!!document.querySelector('[data-devtoggle="1"]')&&/개발자 모드/.test(document.getElementById('main').textContent)),'의견 탭에 개발자 모드 [꺼짐|켜짐] 버튼');
+ ok(await p.evaluate(()=>['who','age'].every(id=>{const c=getComputedStyle(document.getElementById(id));return c.userSelect==='none'||c.webkitUserSelect==='none'})),'헤더 이름·월령은 글자 선택이 안 됨');
+ await p.click('[data-devtoggle="1"]');await p.waitForTimeout(1200);
+ ok(await p.evaluate(()=>DEV.on),'의견 탭 버튼으로 개발자 모드 켜짐');
+ await p.click('[data-dv="all"]');await p.goto(url+'?dev=0');await p.waitForTimeout(800);
  // ---- 개발자 진입: 이름 7번 탭 ----
  await p.goto(url);await p.waitForTimeout(800);
  ok(!(await p.$('#devtog')),'기본은 개발자 모드 꺼짐');
- for(let i=0;i<7;i++){await p.click('#who');await W(80)}
+ for(let i=0;i<4;i++){await p.click('#who');await W(80)}for(let i=0;i<3;i++){await p.click('#age');await W(80)}
  await p.waitForTimeout(1200);
- ok(await p.evaluate(()=>DEV.on),'이름을 7번 탭하면 개발자 모드 켜짐');
+ ok(await p.evaluate(()=>DEV.on),'이름·월령을 합쳐 7번 탭하면 개발자 모드 켜짐');
  ok(await p.evaluate(()=>!document.getElementById('devrole').hidden&&document.querySelectorAll('#devrole .dvpill').length===3),'헤더에 보기 역할 전환(전체·아빠·엄마)');
  await p.click('[data-dv="mom"]');await p.waitForTimeout(400);
  ok(await p.evaluate(()=>E.role==='mom'&&!!document.querySelector('[data-tab="mom"]')&&document.querySelector('[data-tab="dad"]').hidden),'헤더 전환으로 엄마 화면 보기');

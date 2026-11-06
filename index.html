@@ -325,6 +325,9 @@ body.noscroll{overflow:hidden}
 #devrole[hidden]{display:none}
 .dvpill{font:inherit;font-size:11px;font-weight:700;padding:4px 10px;border-radius:99px;border:1px solid var(--line);background:var(--card);color:var(--ink2);cursor:pointer}
 .dvpill[aria-pressed="true"]{background:#22303A;color:#fff;border-color:#22303A}
+
+/* 헤더 이름·월령: 연속으로 눌러도 글자 선택·복사·확대가 되지 않게 */
+#who,#age{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation;cursor:default}
 </style>
 </head>
 <body>
@@ -1361,7 +1364,7 @@ function viewConf(){
   ${S.fb.length?`<div class="msgbox" style="margin-top:16px">${S.fb.slice(0,20).map(f=>{const ft=FEATS.find(x=>x.id===f.feat);return `<div class="msg"><span class="by">${f.by==='mom'?'엄마':'아빠'} · ${esc(ft?ft.t.split(':')[0]:'')} · ${f.done?'반영됨':'대기'}</span>${esc(f.text)}<div class="row between"><small>${fdt(f.ts)}</small><button class="btn ghost sm" data-donefb="${f.id}"${dis}>${f.done?'반영 취소':'반영됨 표시'}</button></div></div>`}).join('')}</div>`:''}</section>`;
   h+=E.local?`<section class="card"><h3>이 기기에만 저장돼요</h3><p class="muted" style="margin-top:4px">컨펌·의견은 이 기기 안에만 남습니다. 개발자에게 의견을 보내려면 ${FEEDBACK_URL?`<a href="${esc(FEEDBACK_URL)}" target="_blank" rel="noopener">의견 보내기</a>를 이용해 주세요.`:'안내받은 방법(메신저·댓글)으로 알려 주세요.'}</p></section>`:`<details class="fold" data-k="inv"${isOpen('inv',false)?' open':''}><summary>엄마 초대 방법</summary><div class="fbody"><ol style="margin:0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:4px"><li>이 페이지 공유 메뉴를 연다</li><li>엄마 이메일로 초대한다</li><li>권한은 "기여자"로 한다 (보기만이면 컨펌·메시지를 못 보낸다)</li><li>엄마는 링크를 열고 "엄마"를 한 번 고른다</li></ol></div></details>`;
   if(E.local)h+=`<section class="card"><h3>내 역할</h3><p class="muted" style="margin:4px 0 8px">이 기기에서 누구로 쓸지 바꿔요. 아빠는 놀이·체크·성장, 엄마는 엄마의 눈·체크·성장 탭이 보여요.</p><div class="seg wide"><button data-myrole="dad" aria-pressed="${E.role!=='mom'}">아빠</button><button data-myrole="mom" aria-pressed="${E.role==='mom'}">엄마</button></div></section>`;
-  if(E.local)h+=`<p style="text-align:center;margin-top:8px"><button class="link" data-devtoggle="${DEV.on?0:1}">개발자 모드 ${DEV.on?'끄기':'켜기'}</button></p>`;
+  if(E.local)h+=`<section class="card"><h3>개발자 모드</h3><p class="muted" style="margin:4px 0 8px">기준 날짜·월령을 옮기고, 아빠·엄마 화면을 바꿔 가며 볼 수 있어요.${DEV.on?' 켜져 있어요. 켜면 오른쪽 아래에 DEV 버튼, 위에 보기 역할 버튼이 보여요.':''}</p><div class="seg wide"><button data-devtoggle="0" aria-pressed="${!DEV.on}">꺼짐</button><button data-devtoggle="1" aria-pressed="${DEV.on}">켜짐</button></div></section>`;
   h+=`<details class="fold" data-k="chg"${isOpen('chg',false)?' open':''}><summary>변경 이력</summary><div class="fbody">${CHANGES.map(c=>`<div class="chlog"><b>v${c.v}</b> ${c.d}<ul style="margin:2px 0 0;padding-left:18px">${c.l.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`).join('')}</div></details>`;
   return h;
 }
@@ -1421,7 +1424,7 @@ function bind(){
   m.querySelectorAll('[data-conf]').forEach(b=>b.onclick=()=>{const [id,st]=b.dataset.conf.split(':');setConf(id,st)});
   m.querySelectorAll('[data-fbfeat]').forEach(b=>b.onclick=()=>{E.fbfeat=b.dataset.fbfeat;const t=g('fbtext');if(t)E.fbtext=t.value;render()});
   m.querySelectorAll('[data-myrole]').forEach(b=>b.onclick=async()=>{await saveRole(b.dataset.myrole);E.tab=b.dataset.myrole==='mom'?'mom':'dad';render();toast((b.dataset.myrole==='mom'?'엄마':'아빠')+'로 바꿨어요.')});
-  m.querySelectorAll('[data-devtoggle]').forEach(b=>b.onclick=()=>devToggleFromUI(b.dataset.devtoggle==='1'));
+  m.querySelectorAll('[data-devtoggle]').forEach(b=>b.onclick=()=>{const on=b.dataset.devtoggle==='1';if(on!==DEV.on)devToggleFromUI(on)});
   m.querySelectorAll('[data-donefb]').forEach(b=>b.onclick=()=>doneFb(b.dataset.donefb));
   if(g('fbtext'))g('fbtext').oninput=e=>{E.fbtext=e.target.value};
   if(g('fbsend'))g('fbsend').onclick=()=>{const t=g('fbtext');if(t)E.fbtext=t.value;sendFb()};
@@ -1580,7 +1583,7 @@ if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)&&typeof clau
 /* ---------- 시작 ---------- */
 (async function init(){
   fromHash();render();loadTools();
-  {let n=0,t0=0;document.getElementById('who').addEventListener('click',()=>{const now=Date.now();if(now-t0>2500)n=0;t0=now;n++;if(n>=7){n=0;if(E.local)devToggleFromUI(!DEV.on)}})}
+  {let n=0,t0=0;const tap=()=>{const now=Date.now();if(now-t0>3000)n=0;t0=now;n++;if(n>=7){n=0;if(E.local)devToggleFromUI(!DEV.on)}};['who','age'].forEach(id=>{const el=document.getElementById(id);el.addEventListener('click',tap);el.addEventListener('contextmenu',e=>e.preventDefault());el.addEventListener('selectstart',e=>e.preventDefault())})}
   document.getElementById('sheet').addEventListener('click',sheetClick);
   document.getElementById('sheet').addEventListener('change',e=>{const t=e.target.closest('[data-lall]');if(t&&E.lib){E.lib.all=t.checked;libRender()}});
   document.getElementById('minibar').addEventListener('click',e=>{if(e.target.closest('[data-mbend]'))openFinish();else window.scrollTo({top:0,behavior:'smooth'})});
