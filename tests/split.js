@@ -31,6 +31,13 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
  ok(await m.evaluate(()=>E.role==='mom'&&S.cfg.name==='콩이'),'엄마 탭: 역할 엄마, 아빠가 만든 아이 정보 보임');
  await m.evaluate(()=>addErrand('두부 사와','wayhome'));await m.waitForTimeout(1500);
  ok(await d.evaluate(()=>S.errands.some(e=>e.text==='두부 사와')),'엄마 탭에서 적은 심부름이 아빠 탭에 실시간 도착');
+ // --- 가족 모드에서도 WHO 기준표가 로드됨 / 엄마 지시가 아빠 시계와 상관없이 우선
+ await d.waitForTimeout(800);
+ ok(await d.evaluate(()=>['wfa_m','wfa_f','lfa_m','lfa_f'].every(k=>S.ref[k]&&S.ref[k].length>50))&&await m.evaluate(()=>!!S.ref.wfa_f),'가족 모드: WHO 기준표(4종) 로드됨');
+ await d.evaluate(()=>{const c=CARDS[3].id;PICK={date:today(),playId:c,playTs:Date.now()+3600e3,playLock:false};pickSave();render()});
+ const cid=await m.evaluate(()=>cardPool().find(c=>c.id!==resolveItem('play').id).id);
+ await m.evaluate(id=>assignItem('play',id),cid);
+ await d.waitForFunction(id=>resolveItem('play').id===id,cid,{timeout:6000}).then(()=>ok(true,'엄마 지시가 아빠 폰에 반영 (아빠 쪽 선택·시계가 앞서 있어도)')).catch(()=>ok(false,'엄마 지시 미반영'));
  // --- 아빠 보고가 엄마에게 알림으로 도착 (엄마가 다른 탭을 보는 중)
  await m.click('[data-tab="check"]');await m.waitForTimeout(300);
  await d.evaluate(()=>sendMsg('report','오늘 보고 테스트','',true));
