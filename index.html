@@ -221,6 +221,7 @@ summary{min-height:44px;display:flex;align-items:center}
 #devtog.shifted{background:#D9822B}
 #devbody{position:fixed;left:10px;right:10px;bottom:calc(132px + env(safe-area-inset-bottom,0px));max-height:62vh;overflow:auto;background:var(--card);color:var(--ink);border-radius:18px;box-shadow:0 8px 30px rgba(0,0,0,.28);padding:14px;font-size:13px;-webkit-overflow-scrolling:touch}
 #devbody[hidden]{display:none}
+nav button[hidden]{display:none}
 .dv-grid{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:8px 0}
 .dv-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .dv-row input{font:inherit;font-size:16px;padding:8px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);min-width:0}
@@ -249,18 +250,20 @@ summary{min-height:44px;display:flex;align-items:center}
 <script>
 /* ---------- 개발자 모드 (?dev=1 로 켜고 ?dev=0 으로 끔): 기준 날짜를 옮겨 월령·일자별 화면을 확인 ----------
    Date 를 한 겹 씌워 앱 전체의 '오늘'이 같이 움직인다. 실제 기록과 섞이지 않게 저장소도 따로 쓴다(dpn_db_dev). */
-const DEV={on:false,off:0};
+const DEV={on:false,off:0,draft:true,view:'all'};
 try{
   const q=location.search.match(/[?&]dev=([01])/);
   if(q){if(q[1]==='1'){localStorage.setItem('dpn_dev','1')}else{localStorage.removeItem('dpn_dev');localStorage.removeItem('dpn_dev_off')}}
   DEV.on=localStorage.getItem('dpn_dev')==='1';
   DEV.off=DEV.on?Number(localStorage.getItem('dpn_dev_off')||0):0;
+  DEV.draft=localStorage.getItem('dpn_dev_draft')!=='0';
+  DEV.view=localStorage.getItem('dpn_dev_view')||'all';
 }catch(e){}
 const RealDate=Date;
 if(DEV.on){window.Date=class extends RealDate{constructor(...a){a.length?super(...a):super(RealDate.now()+DEV.off)}static now(){return RealDate.now()+DEV.off}}}
 /* ---------- 기준 데이터: CDC "Learn the Signs. Act Early." 30개월 / 3세 이정표 (2026-05 개정본) ---------- */
 const DOM = {soc:{n:'사회·정서',c:'c-soc'},lang:{n:'언어·의사소통',c:'c-lang'},cog:{n:'인지',c:'c-cog'},mov:{n:'신체·운동',c:'c-mov'}};
-const MS = [
+const MS30 = [
   {id:'s1',d:'soc',t:'또래 곁에서 놀고, 가끔은 같이 논다',how:'놀이터에서 또래와 함께 노는 모습'},
   {id:'s2',d:'soc',t:'"나 좀 봐!" 하며 할 수 있는 걸 보여준다',how:'"봐봐" 하며 자랑하는 모습'},
   {id:'s3',d:'soc',t:'"정리 시간이야" 하면 장난감 정리를 돕는다',how:'정리 신호에 따라 치우는 모습'},
@@ -277,13 +280,59 @@ const MS = [
   {id:'m3',d:'mov',t:'두 발로 동시에 뛰어오른다',how:'제자리에서 두 발 점프'},
   {id:'m4',d:'mov',t:'책을 읽어줄 때 한 장씩 넘긴다',how:'한 장씩 넘기는 정도'}
 ];
-const MSBY = Object.fromEntries(MS.map(m=>[m.id,m]));
-const NEXT = {
-  soc:['엄마·아빠가 떠나도 10분 안에 진정한다','다른 아이들을 보고 다가가 함께 논다'],
-  lang:['주고받는 대화를 2번 이상 이어간다','"누구/뭐/어디/왜"를 묻는다','그림 속 동작을 말한다 ("달려요", "먹어요")','이름을 물으면 말한다','대부분 다른 사람이 알아듣게 말한다'],
-  cog:['보여주면 동그라미를 그린다','뜨거운 물건은 경고하면 만지지 않는다'],
-  mov:['큰 구슬이나 마카로니를 줄에 꿴다','느슨한 바지나 겉옷을 혼자 입는다','포크를 쓴다']
+/* 월령별 이정표 세트. ready:false 는 CDC 원문 대조 전이라 개발자 모드(초안 보기)에서만 쓴다. */
+const MSETS={
+  18:{ready:false,items:[
+    {id:'x18s1',d:'soc',t:'멀리 가도 어른이 가까이 있는지 살핀다',how:'떨어졌다가 돌아보며 확인하는 모습'},
+    {id:'x18s2',d:'soc',t:'흥미로운 것을 가리켜 보여준다',how:'"저거 봐" 하며 가리키는 모습'},
+    {id:'x18s3',d:'soc',t:'옷을 입힐 때 팔을 넣거나 발을 든다',how:'옷 입힐 때 협조하는 정도'},
+    {id:'x18l1',d:'lang',t:'엄마·아빠 말고 세 단어 이상 말한다',how:'아는 단어를 떠올려 세어보기'},
+    {id:'x18l2',d:'lang',t:'몸짓 없이 한 단계 지시를 따른다 ("이리 줘")',how:'말로만 한 지시에 반응하는 정도'},
+    {id:'x18c1',d:'cog',t:'빗자루질 같은 집안일을 따라 한다',how:'어른 행동을 흉내 내는 모습'},
+    {id:'x18c2',d:'cog',t:'장난감 차를 미는 등 단순하게 논다',how:'장난감 본래 용도로 노는 모습'},
+    {id:'x18m1',d:'mov',t:'잡아 주지 않아도 혼자 걷는다',how:'혼자 걷는 안정감'},
+    {id:'x18m2',d:'mov',t:'낙서를 한다',how:'크레용으로 선을 긋는 모습'},
+    {id:'x18m3',d:'mov',t:'손가락으로 집어 먹는다',how:'작은 간식을 집는 모습'},
+    {id:'x18m4',d:'mov',t:'소파·의자에 혼자 오르내린다',how:'도움 없이 오르내리는 정도'}
+  ]},
+  24:{ready:false,items:[
+    {id:'x24s1',d:'soc',t:'다른 사람이 다치거나 슬퍼하는 걸 알아챈다',how:'우는 사람을 보고 반응하는 모습'},
+    {id:'x24s2',d:'soc',t:'새로운 상황에서 어른 얼굴을 보고 반응을 살핀다',how:'낯선 곳에서 어른을 살피는 모습'},
+    {id:'x24l1',d:'lang',t:'책에서 "…어디 있어?" 하면 가리킨다',how:'책 그림 찾기'},
+    {id:'x24l2',d:'lang',t:'두 단어 이상 붙여 말한다',how:'두 단어 이상 붙여 말하는 빈도'},
+    {id:'x24l3',d:'lang',t:'몸의 부위를 두 군데 이상 가리킨다',how:'"코 어디 있어?" 하고 물어보기'},
+    {id:'x24c1',d:'cog',t:'한 손에 물건을 든 채 다른 손으로 다른 일을 한다',how:'양손을 따로 쓰는 모습'},
+    {id:'x24c2',d:'cog',t:'장난감의 버튼·손잡이를 써 보려 한다',how:'장난감 조작을 시도하는 모습'},
+    {id:'x24c3',d:'cog',t:'장난감 두 개 이상을 함께 가지고 논다',how:'여러 장난감을 연결해 노는 모습'},
+    {id:'x24m1',d:'mov',t:'공을 찬다',how:'공을 발로 차는 모습'},
+    {id:'x24m2',d:'mov',t:'달린다',how:'뛰는 모습'},
+    {id:'x24m3',d:'mov',t:'계단 몇 개를 걷는다 (도움 받아도 됨)',how:'계단 오르기'},
+    {id:'x24m4',d:'mov',t:'숟가락으로 먹는다',how:'숟가락 사용 정도'}
+  ]},
+  30:{ready:true,items:MS30},
+  36:{ready:true,items:[
+    {id:'x36s1',d:'soc',t:'엄마·아빠가 떠나도 10분 안에 진정한다',how:'헤어질 때 진정하는 시간'},
+    {id:'x36s2',d:'soc',t:'다른 아이들을 보고 다가가 함께 논다',how:'또래에게 다가가는 모습'},
+    {id:'x36l1',d:'lang',t:'주고받는 대화를 2번 이상 이어간다',how:'말을 주고받는 횟수'},
+    {id:'x36l2',d:'lang',t:'"누구/뭐/어디/왜"를 묻는다',how:'질문을 하는 빈도'},
+    {id:'x36l3',d:'lang',t:'그림 속 동작을 말한다 ("달려요", "먹어요")',how:'그림을 보고 동작을 말하는 정도'},
+    {id:'x36l4',d:'lang',t:'이름을 물으면 말한다',how:'자기 이름을 말하는 정도'},
+    {id:'x36l5',d:'lang',t:'대부분 다른 사람이 알아듣게 말한다',how:'가족 밖 사람이 알아듣는 정도'},
+    {id:'x36c1',d:'cog',t:'보여주면 동그라미를 그린다',how:'따라 그리는 모습'},
+    {id:'x36c2',d:'cog',t:'뜨거운 물건은 경고하면 만지지 않는다',how:'"뜨거워" 하면 멈추는 정도'},
+    {id:'x36m1',d:'mov',t:'큰 구슬이나 마카로니를 줄에 꿴다',how:'구슬 꿰기'},
+    {id:'x36m2',d:'mov',t:'느슨한 바지나 겉옷을 혼자 입는다',how:'혼자 입는 정도'},
+    {id:'x36m3',d:'mov',t:'포크를 쓴다',how:'포크로 먹는 정도'}
+  ]}
 };
+const MSBY=Object.fromEntries(Object.values(MSETS).flatMap(x=>x.items).map(m=>[m.id,m]));
+/* 현재 월령에 쓰는 세트. DRAFT() 가 켜지면(개발자 모드) 원문 대조 전 세트도 쓴다. */
+const DRAFT=()=>DEV.on&&DEV.draft;
+const setAges=()=>Object.keys(MSETS).map(Number).filter(a=>DRAFT()||MSETS[a].ready).sort((a,b)=>a-b);
+const setAgeFor=mo=>{const a=setAges();let r=a[0];for(const x of a)if(mo>=x)r=x;return r};
+const nextSetAge=mo=>setAges().find(x=>x>mo)||null;
+let CURSET=30,MS=MS30;
+function syncSet(){CURSET=setAgeFor(ageFloat());MS=MSETS[CURSET].items}
 const CDC='CDC 팁 기반', OWN='이정표 기반 자체 구성';
 const CARDS = [
   {id:'book',t:'그림책 "이게 뭐야?"',doms:['lang','mov'],ms:['l3','m4','l1'],src:CDC,steps:['책 한 권을 고르고 무릎에 앉힌다','그림을 가리키며 "이게 뭐야?" 5번 묻는다','넘기는 건 아이에게 맡긴다 (한 장씩)','"누가 / 뭐 / 어디"로 질문을 바꿔본다'],x30:'두 번째 책으로 넘어가 "이다음엔 어떻게 될까?" 이야기를 이어 말하게 한다.',q:'아이가 맞게 말한 그림은?'},
@@ -349,6 +398,26 @@ CARDS.push(
   {id:"turn2",t:"책장 넘기기 경주",doms:["mov", "lang"],ms:["m4", "l3"],src:OWN,steps:["보드북 한 권을 가운데 놓는다", "한 장씩 넘기며 그림 이름을 말한다", "아이가 넘기기 전에 \"다음엔 뭐가 나올까?\" 묻는다", "마지막 장에서 \"끝!\" 하고 같이 외친다"],x30:"가장 좋아한 장을 말하게 한다.",q:"한 장씩 넘긴 횟수는?"},
   {id:"hug",t:"잘 자 인사 만들기",doms:["soc", "lang"],ms:["s2", "l4", "l2"],src:OWN,steps:["잠자리에서 불을 낮춘다", "\"오늘 뭐가 제일 재밌었어?\" 하고 묻는다", "아이 답을 한 문장으로 다시 말해준다", "\"내일 또 하자\" 하고 약속한다"],x30:"엄마 아빠 인형에게도 인사하게 한다.",q:"아이가 말한 장면은 몇 개였나요?"}
 );
+/* 월령 범위(age)가 없는 카드는 24~35개월용. ready:false 는 원문 대조 전 이정표와 연결된 초안 카드(개발자 모드에서만) */
+CARDS.forEach(c=>{if(!c.age)c.age=[24,36]});
+CARDS.push(
+  {id:"beads",t:"구슬 꿰기 놀이",doms:["mov", "cog"],ms:["x36m1"],src:OWN,steps:["큰 구슬(또는 마카로니)과 굵은 끈을 준비한다 (삼킬 크기 주의, 아빠가 옆에서 지킴)", "아빠가 한 개를 꿰어 보인다", "아이가 한 개씩 꿰게 기다린다", "다 꿴 목걸이를 아이 목이 아니라 손목에 걸어 준다"],x30:"색 순서대로 꿰는 규칙을 정해 본다.",q:"꿴 구슬은 몇 개였나요?",age:[36, 72]},
+  {id:"dress36",t:"혼자 입기 챌린지",doms:["mov", "cog"],ms:["x36m2"],src:OWN,steps:["내일 입을 헐렁한 겉옷이나 바지를 꺼낸다", "\"먼저 팔 넣고, 그다음 단추\" 순서를 말해 준다", "아이가 혼자 하게 기다린다 (도와 달라고 할 때만)", "\"혼자 했네\" 하고 구체적으로 말해 준다"],x30:"신발·양말까지 이어서 해 본다.",q:"혼자 해낸 단계는?",age:[36, 72]},
+  {id:"circle36",t:"동그라미 그리기",doms:["cog", "mov"],ms:["x36c1"],src:OWN,steps:["큰 종이와 굵은 크레용을 준비한다", "아빠가 동그라미를 천천히 그려 보인다", "아이가 따라 그리게 한다", "동그라미에 눈·코·입을 붙여 얼굴을 만든다"],x30:"동그라미로 해, 공, 바퀴를 그려 본다.",q:"그린 동그라미는 몇 개였나요?",age:[36, 72]},
+  {id:"whyq",t:"\"왜?\" 질문 놀이",doms:["lang"],ms:["x36l2", "x36l1"],src:OWN,steps:["아이가 좋아하는 물건을 하나 들고 \"이건 뭘까?\" 먼저 묻는다", "아이가 \"왜?\"나 \"뭐야?\"를 물으면 짧게 답해 준다", "답한 뒤 \"너는 왜 그런 것 같아?\" 되묻는다", "대화가 두 번 오갈 때까지 이어 본다"],x30:"궁금한 걸 세 가지 서로 물어본다.",q:"아이가 먼저 한 질문은 몇 번이었나요?",age:[36, 72]},
+  {id:"picture36",t:"그림 속 동작 말하기",doms:["lang", "cog"],ms:["x36l3"],src:OWN,steps:["동작이 보이는 그림책이나 사진을 고른다", "\"뭐 하고 있어?\" 하고 묻는다", "아이가 \"먹어요\", \"달려요\"처럼 말하게 기다린다", "아빠가 동작을 흉내 내면 아이가 맞힌다"],x30:"동작 세 개를 이어서 이야기로 말해 본다.",q:"아이가 말한 동작은 몇 개였나요?",age:[36, 72]},
+  {id:"apart36",t:"잠깐 다녀올게 연습",doms:["soc"],ms:["x36s1"],src:OWN,steps:["외출 전에 \"금방 올게\" 하고 짧게 인사하는 방법을 정한다", "아이가 좋아하는 물건이나 인형을 맡긴다", "아주 짧은 시간(1~2분)부터 떨어져 본다", "돌아와서 \"기다려 줬네\" 하고 반가워한다"],x30:"시간을 조금씩 늘려 본다.",q:"아이가 진정하기까지 걸린 시간은?",age:[36, 72]},
+  {id:"hot36",t:"뜨거워! 안전 약속 놀이",doms:["cog"],ms:["x36c2"],src:OWN,steps:["따뜻한 컵(뜨겁지 않게)과 차가운 컵을 준비한다", "\"뜨거워!\" 하면 손을 멈추는 신호를 정한다", "아빠가 \"뜨거워!\" 하고 외치면 아이가 멈추는 놀이를 한다", "진짜 뜨거운 곳(가스레인지·국)은 만지지 않고 눈으로만 본다"],x30:"집 안의 \"뜨거운 곳\" 세 군데를 찾아본다.",q:"신호에 멈춘 횟수는?",age:[36, 72]},
+  {id:"friend36",t:"또래에게 다가가기",doms:["soc", "lang"],ms:["x36s2", "x36l1"],src:OWN,steps:["놀이터에서 비슷한 또래를 먼저 찾아 같이 본다", "\"안녕, 같이 놀래?\" 말을 아빠가 한 번 보여 준다", "아이가 다가가면 멀리서 지켜본다", "같이 논 시간을 보고 칭찬해 준다"],x30:"아이가 이름을 묻거나 말해 본다.",q:"아이가 먼저 다가간 횟수는?",age:[36, 72]},
+  {id:"fork36",t:"포크로 콕콕 간식",doms:["mov"],ms:["x36m3"],src:OWN,steps:["과일을 한입 크기로 썰어 접시에 담는다 (끝이 뭉툭한 아기 포크 사용)", "아빠가 먼저 콕 찍어 먹어 보인다", "아이가 스스로 찍게 기다린다", "잘 찍으면 \"콕!\" 소리를 함께 낸다"],x30:"포크로 찍는 순서(사과, 바나나…)를 말해 본다.",q:"혼자 찍어 먹은 조각은?",age:[36, 72]},
+  {id:"name36",t:"내 이름·가족 이름 말하기",doms:["lang", "soc"],ms:["x36l4", "x36l5"],src:OWN,steps:["가족 사진을 꺼낸다", "\"이 사람은 누구야?\" 하고 묻는다", "\"너는 이름이 뭐야?\" 하고 묻고 기다린다", "아이가 말하면 크게 반응하고 한 번 더 또박또박 말해 준다"],x30:"이름을 말하고 나이도 손가락으로 보여 준다.",q:"아이가 말한 이름은 몇 개였나요?",age:[36, 72]},
+  {id:"push18",t:"장난감 차 밀고 쫓아가기",doms:["cog", "mov"],ms:["x18c2", "x18m1"],src:OWN,steps:["장난감 차를 바닥에서 굴려 준다", "아이가 따라가 잡게 한다", "밀고 받는 놀이로 이어 간다", "아이가 직접 밀 때 \"부릉\" 소리를 같이 낸다"],x30:"차를 상자 속에 숨기고 찾는다.",q:"밀어 본 횟수는?",age:[12, 24],ready:false},
+  {id:"scribble18",t:"낙서 놀이",doms:["mov"],ms:["x18m2"],src:OWN,steps:["굵은 크레용과 큰 종이를 준비한다 (벽 대신 종이)", "아빠가 선 하나를 그어 보인다", "아이가 마음대로 긋게 둔다", "\"쓱쓱\" 소리를 같이 낸다"],x30:"색을 바꿔 주며 색 이름을 말해 준다.",q:"그은 선은 몇 개였나요?",age:[12, 24],ready:false},
+  {id:"finger18",t:"손가락으로 집어 먹기",doms:["mov"],ms:["x18m3"],src:OWN,steps:["삼킬 위험이 적은 부드러운 간식을 준비한다 (아빠가 옆에서 지킴)", "작은 접시에 몇 조각을 둔다", "아이가 집어 먹게 기다린다", "먹은 조각 수를 같이 센다"],x30:"접시에서 접시로 옮겨 본다.",q:"집어 먹은 조각은?",age:[12, 24],ready:false},
+  {id:"chore18",t:"빗자루 따라하기",doms:["cog", "soc"],ms:["x18c1"],src:OWN,steps:["장난감 빗자루나 작은 수건을 준비한다", "아빠가 쓸고 닦는 모습을 보여 준다", "아이가 따라 하게 둔다", "\"도와줬네\" 하고 말해 준다"],x30:"아빠가 하는 다른 일도 따라 해 본다.",q:"따라 한 행동은 몇 가지였나요?",age:[12, 24],ready:false},
+  {id:"walk18",t:"걸음마 걷기 놀이",doms:["mov"],ms:["x18m1", "x18m4"],src:OWN,steps:["안전한 바닥에 쿠션을 깔아 둔다", "한두 걸음 떨어져서 두 팔을 벌려 부른다", "아이가 혼자 걸어오게 기다린다", "소파나 낮은 의자 오르내리기도 곁에서 지켜본다"],x30:"걷는 거리를 한 걸음씩 늘린다.",q:"혼자 걸은 걸음은?",age:[12, 24],ready:false},
+  {id:"point18",t:"가리키기 놀이",doms:["soc", "lang"],ms:["x18s2", "x18l1"],src:OWN,steps:["그림책이나 창밖 풍경을 같이 본다", "아빠가 먼저 가리키며 \"저기!\" 하고 말한다", "아이가 가리키면 이름을 말해 준다", "아이가 가리키는 걸 따라가서 같이 본다"],x30:"가리킨 것을 두 단어로 말해 본다.",q:"아이가 가리킨 횟수는?",age:[12, 24],ready:false}
+);
 /* 준비물·책 가이드. v:true 는 이 앱을 만들며 출처를 직접 확인한 책, 나머지는 대표 예시(구매 전 직접 확인) */
 const ITEMS={
   book:[
@@ -396,7 +465,7 @@ const BK=['거의 못함','1~2번','3~4번','5번 이상'];
 const RX=['잘 따라함','보통','힘들어함'];
 
 /* ---------- 상태 ---------- */
-const VERSION='0.8';
+const VERSION='0.9';
 const DEF_BIRTH=(()=>{const d=new Date();d.setMonth(d.getMonth()-30);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const S={cfg:{name:'우리 아이',birth:DEF_BIRTH,sex:'',ck:''},ms:{},plays:[],log:[],body:[],growth:[],ref:{},assign:{},msgs:[],conf:{},fb:[]};
 const E={op:{},mk:null,gk:null,cbirth:'',role:null,srole:null,seen:0,sname:'',fbtext:'',fbfeat:'dad',db:null,uid:null,canWrite:true,tab:'dad',cfgSet:false,cardId:null,picked:false,mins:15,left:900,running:false,tick:null,pending:false,rx:null,bk:null,sbirth:'',ssex:'',gh:null,gw:null,gwarn:null,loaded:false};
@@ -461,6 +530,7 @@ const FEATS=[
   {id:'msg',t:'칭찬·채찍질 메시지'}
 ];
 const CHANGES=[
+  {v:'0.9',d:'2026-11-06',l:['월령별 이정표 세트 구조(18·24·30·36개월)와 월령별 놀이 카드 풀','아빠는 "엄마의 눈", 엄마는 "아빠의 놀이" 탭이 보이지 않음 (개발자 모드는 전체 보기)','원문 대조 전 이정표·카드(18·24개월)는 개발자 모드에서만 표시']},
   {v:'0.8',d:'2026-11-06',l:['처음 입력: 다음 항목으로 자동 스크롤, 완료하면 맨 위로','개발자 모드(?dev=1): 기준일·월령을 옮겨 화면 확인, 7일 놀이 순환, 월령별 WHO 값']},
   {v:'0.7',d:'2026-11-06',l:['PWA(설치·오프라인), 공개 체험용 정리: 기본 생일 제거, 저장 방식 안내, 참고용 면책','서버가 없는 모드에서는 "앱 사용자 평균"·엄마 전송 숨김','GitHub Pages 자동 배포 설정']},
   {v:'0.6',d:'2026-11-06',l:['화면 단순화: 하단 탭 4개, 오늘 화면 한 장 중심','보조 내용은 접어서 표시, 엄마 화면은 이행 현황·한마디 우선']},
@@ -514,7 +584,8 @@ async function assignCard(id){
 
 /* ---------- 계산 ---------- */
 function need(card){return card.ms.reduce((s,id)=>s+(2-lv(id)),0)}
-function ranked(){return CARDS.slice().sort((a,b)=>need(b)-need(a)||CARDS.indexOf(a)-CARDS.indexOf(b))}
+function cardPool(){const mo=ageFloat(),ok=c=>DRAFT()||c.ready!==false;let p=CARDS.filter(c=>ok(c)&&mo>=c.age[0]&&mo<c.age[1]);if(p.length<4)p=CARDS.filter(ok);return p}
+function ranked(){return cardPool().slice().sort((a,b)=>need(b)-need(a)||CARDS.indexOf(a)-CARDS.indexOf(b))}
 function dayAgo(n){const d=new Date();d.setDate(d.getDate()-n);return ymd(d)}
 function pickToday(){
   if(S.assign[today()]&&cardById(S.assign[today()]))return S.assign[today()];
@@ -620,6 +691,7 @@ function head(){
     if(d){const show=un&&b.dataset.tab===target&&E.tab!==target;d.hidden=!show;d.textContent=un}
   });
   $('#confbtn').setAttribute('aria-pressed',String(E.tab==='conf'));
+  document.querySelectorAll('nav button').forEach(b=>{b.hidden=!tabsFor().includes(b.dataset.tab)});
   devUpdate();
   $('#age').innerHTML=E.cfgSet?'만 '+a.mo+'<small>개월</small>'+a.d+'<small>일</small>':'<small style="font-size:18px;margin:0">생일을 입력해 주세요</small>';
   $('#foot').innerHTML='<b>참고용 안내</b> 이 앱의 내용은 의학적 진단·치료 조언이 아닙니다. 걱정되는 점은 소아과나 영유아 건강검진에서 상담하세요.<br><br>발달 기준: 미국 CDC "Learn the Signs. Act Early." 이정표(30개월·3세, 2026년 5월 개정본)를 바탕으로 한국어로 옮기고 단순화했습니다. 이정표는 아이의 75% 이상이 해당 월령까지 하는 행동입니다. 원문은 <a href="https://www.cdc.gov/act-early/milestones/index.html" target="_blank" rel="noopener">cdc.gov/act-early</a>에서 볼 수 있습니다. 이 앱은 CDC·HHS가 제작하거나 승인하거나 보증한 것이 아니며, 진단이나 선별검사가 아니고 영유아 건강검진(K-DST)과 소아과 상담을 대체하지 않습니다. 놀이 카드 중 "자체 구성"은 이정표를 바탕으로 만든 예시입니다.'+(Object.keys(S.ref).length?' 키·몸무게 기준: WHO Child Growth Standards.':'')+(E.db?'':' 지금은 저장되지 않는 미리보기 상태입니다.')+(E.local?'<br><br><b>저장 방식</b> 이 앱에는 서버가 없습니다. 입력한 내용은 이 기기의 브라우저에만 저장되고 개발자나 다른 사용자에게 전송되지 않습니다. 브라우저 데이터를 지우거나 앱을 삭제하면 기록이 사라지며, 다른 기기와는 공유되지 않습니다. 엄마·아빠 메시지와 지시는 한 기기를 같이 쓸 때만 보입니다.':'');
@@ -628,6 +700,12 @@ function head(){
 /* ---------- 입력 흐름 스크롤: 다음 입력으로 내려가고, 끝나면 맨 위로 ---------- */
 function scrollToSoon(sel,block){requestAnimationFrame(()=>setTimeout(()=>{const e=document.querySelector(sel);if(e)e.scrollIntoView({behavior:'smooth',block:block||'start'})},80))}
 function scrollTopSoon(){requestAnimationFrame(()=>setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),80))}
+/* 역할별 탭: 아빠는 '엄마의 눈'이, 엄마는 '아빠의 놀이'가 보이지 않는다. 개발자 모드의 보기 역할이 '전체'면 모두 보인다. */
+function tabsFor(){
+  if(DEV.on&&DEV.view==='all')return ['dad','check','grow','mom'];
+  if(E.role==='mom')return ['mom','check','grow'];
+  return ['dad','check','grow'];
+}
 function setupNext(){
   const needKid=!(E.cfgSet&&S.cfg.sex);
   if(needKid&&!(E.ssex||S.cfg.sex&&E.cfgSet))return scrollToSoon('#s-sex');
@@ -696,9 +774,9 @@ function viewDad(){
 }
 function viewCheck(){
   const dis=E.canWrite?'':' disabled';
-  const dd=daysTo(S.cfg.birth,30);
+  const mo0=ageFloat(),tAge=mo0<CURSET?CURSET:nextSetAge(mo0),dd=tAge?daysTo(S.cfg.birth,tAge):0,draftSet=!MSETS[CURSET].ready;
   const doms=Object.keys(DOM),firstInc=doms.find(d=>{const s=domScore(d);return s.got<s.n});
-  let h=`<p class="lead"><b>${dd>0?'30개월까지 D-'+dd:'30개월 이정표'}</b><br>지금 모습에 가까운 버튼 하나만 누르세요. 언제든 바꿀 수 있어요.</p>`;
+  let h=`<p class="lead"><b>${CURSET}개월 이정표${tAge&&dd>0?' · '+tAge+'개월까지 D-'+dd:''}</b>${draftSet?'<br><span class="muted">원문 대조 전 초안 (개발자 모드에서만 보여요)</span>':''}<br>지금 모습에 가까운 버튼 하나만 누르세요. 언제든 바꿀 수 있어요.</p>`;
   for(const d of doms){
     const sc=domScore(d);
     h+=`<details class="fold" data-k="d_${d}"${isOpen('d_'+d,d===firstInc)?' open':''}><summary><span class="${DOM[d].c}">${DOM[d].n}</span><span class="muted" style="margin-left:auto">${sc.got}/${sc.n} 잘함</span></summary><div class="fbody" style="gap:0">`;
@@ -708,7 +786,8 @@ function viewCheck(){
     }
     h+=`</div></details>`;
   }
-  h+=`<details class="fold" data-k="next"${isOpen('next',false)?' open':''}><summary>3세 이정표 미리보기</summary><div class="fbody">${doms.map(d=>`<div><b class="${DOM[d].c}">${DOM[d].n}</b><ul class="plain muted">${NEXT[d].map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`).join('')}<p class="muted">앞서 나가게 하는 용도보다 다음 놀이 방향을 잡는 용도로 보세요.</p></div></details>`;
+  const pv=setAges().find(x=>x>CURSET);
+  if(pv)h+=`<details class="fold" data-k="next"${isOpen('next',false)?' open':''}><summary>${pv}개월 이정표 미리보기</summary><div class="fbody">${doms.map(d=>`<div><b class="${DOM[d].c}">${DOM[d].n}</b><ul class="plain muted">${MSETS[pv].items.filter(x=>x.d===d).map(x=>`<li>${esc(x.t)}</li>`).join('')}</ul></div>`).join('')}<p class="muted">앞서 나가게 하는 용도보다 다음 놀이 방향을 잡는 용도로 보세요.</p></div></details>`;
   return h;
 }
 /* SVG 성장 그래프 */
@@ -777,7 +856,7 @@ function viewMom(){
   const since=Date.now()-7*864e5;
   const ups=S.log.filter(l=>l.ts>=since&&l.to>l.from);
   const n2=MS.filter(m=>lv(m.id)===2).length,n1=MS.filter(m=>lv(m.id)===1).length,n0=MS.length-n2-n1;
-  const dd=daysTo(S.cfg.birth,30),dayName=['일','월','화','수','목','금','토'];
+  const mo1=ageFloat(),tAge1=mo1<CURSET?CURSET:nextSetAge(mo1),dd=tAge1?daysTo(S.cfg.birth,tAge1):-1,dayName=['일','월','화','수','목','금','토'];
   const todayDone=minsOn(today());
   const domCount=d=>weekPlays.filter(p=>{const c=cardById(p.card);return c&&c.doms.includes(d)}).length;
   const dis=E.canWrite?'':' disabled';
@@ -797,13 +876,13 @@ function viewMom(){
   h+=`<details class="fold" data-k="msv"${isOpen('msv',false)?' open':''}><summary>항목별 현황<span class="sub">잘함 ${n2} · 가끔 ${n1} · 아직 ${n0}</span></summary><div class="fbody"><div class="msgrid">${MS.map(m=>`<div><span>${esc(m.t.split(' (')[0])}</span><span class="pill lv${lv(m.id)}">${LV[lv(m.id)]}</span></div>`).join('')}</div></div></details>`;
   h+=`<details class="fold" data-k="rep"${isOpen('rep',false)?' open':''}><summary>최근 아빠 보고</summary><div class="fbody" style="gap:0">${S.plays.length?S.plays.slice(0,6).map(p=>{const c=cardById(p.card);return `<div class="erow"><span>${esc(p.date)} · ${esc(c?c.t:p.card)} · ${p.mins}분</span><span class="muted">${p.r!=null?RX[p.r]:''}</span></div>`}).join(''):'<p class="muted">아직 보고가 없습니다.</p>'}</div></details>`;
   const cur=S.assign[today()];
-  h+=`<details class="fold" data-k="asg"${isOpen('asg',false)?' open':''}><summary><span>오늘 놀이 지시하기${cur?`<span class="sub">${esc(cardById(cur)?cardById(cur).t:'')}</span>`:''}</span></summary><div class="fbody"><p class="muted">고르면 아빠 화면에 "엄마 지시"로 뜨고 먼저 나옵니다.</p><div class="msglist" style="margin-top:0">${CARDS.map(c=>`<button class="btn ghost" data-assign="${c.id}"${dis}>${esc(c.t)}${cur===c.id?' ✓':''}</button>`).join('')}</div></div></details>`;
+  h+=`<details class="fold" data-k="asg"${isOpen('asg',false)?' open':''}><summary><span>오늘 놀이 지시하기${cur?`<span class="sub">${esc(cardById(cur)?cardById(cur).t:'')}</span>`:''}</span></summary><div class="fbody"><p class="muted">고르면 아빠 화면에 "엄마 지시"로 뜨고 먼저 나옵니다.</p><div class="msglist" style="margin-top:0">${cardPool().map(c=>`<button class="btn ghost" data-assign="${c.id}"${dis}>${esc(c.t)}${cur===c.id?' ✓':''}</button>`).join('')}</div></div></details>`;
   let msg;
-  if(dd>0)msg=`30개월까지 ${dd}일 남았어요. 이 이정표는 "또래 4명 중 3명 이상이 30개월까지 하는 행동"이라, 30개월 전에 못 하는 항목이 있는 건 지연을 뜻하지 않아요. 점수보다 매주 늘어나는 흐름을 보세요.`;
-  else if(n0>0)msg=`30개월 기준일이 지났고 '아직'인 항목이 ${n0}개 있어요. CDC 안내는 이정표를 못 하거나 하던 걸 못 하게 됐거나 걱정되는 점이 있으면 기다리지 말고 소아과에서 발달 선별검사를 상의하라는 것입니다.`;
-  else msg='30개월 이정표를 모두 "잘함"으로 체크했어요. 발달 체크의 3세 미리보기로 다음 방향을 잡아보세요.';
+  if(dd>0)msg=`${tAge1}개월까지 ${dd}일 남았어요. 이 이정표는 "또래 4명 중 3명 이상이 해당 월령까지 하는 행동"이라, 그 전에 못 하는 항목이 있는 건 지연을 뜻하지 않아요. 점수보다 매주 늘어나는 흐름을 보세요.`;
+  else if(n0>0)msg=`${CURSET}개월 기준일이 지났고 '아직'인 항목이 ${n0}개 있어요. CDC 안내는 이정표를 못 하거나 하던 걸 못 하게 됐거나 걱정되는 점이 있으면 기다리지 말고 소아과에서 발달 선별검사를 상의하라는 것입니다.`;
+  else msg=CURSET+'개월 이정표를 모두 "잘함"으로 체크했어요. 발달 체크의 다음 단계 미리보기로 방향을 잡아보세요.';
   h+=`<details class="fold" data-k="note"${isOpen('note',false)?' open':''}><summary>엄마가 볼 참고 안내</summary><div class="fbody"><p style="font-size:14px">${esc(msg)} 이 화면은 진단이 아니에요.</p></div></details>`;
-  h+=`<details class="fold" data-k="set"${isOpen('set',false)?' open':''}><summary>설정 (이름·생일)</summary><div class="fbody"><div class="row" style="align-items:flex-end;gap:12px"><label class="field" style="flex:1">아이 이름<input id="cname" type="text" maxlength="12" value="${esc(S.cfg.name)}"${dis}></label><button class="btn" id="csave"${dis}>저장</button></div><div>${wheelHTML('cbirth',E.cbirth||S.cfg.birth)}</div><p class="muted">엄마 초대: 이 페이지의 공유 메뉴에서 이메일로 초대하세요. 같이 기록하려면 "기여자"로 초대합니다.</p></div></details>`;
+  h+=`<details class="fold" data-k="set"${isOpen('set',false)?' open':''}><summary>설정 (이름·생일)</summary><div class="fbody"><div class="row" style="align-items:flex-end;gap:12px"><label class="field" style="flex:1">아이 이름<input id="cname" type="text" maxlength="12" value="${esc(S.cfg.name)}"${dis}></label><button class="btn" id="csave"${dis}>저장</button></div><div>${wheelHTML('cbirth',E.cbirth||S.cfg.birth)}</div>${E.local?'<p class="muted">엄마·아빠 기록 연결(가족 연결)은 다음 버전에서 지원돼요. 지금은 한 기기 안에서만 보입니다.</p>':'<p class="muted">엄마 초대: 이 페이지의 공유 메뉴에서 이메일로 초대하세요. 같이 기록하려면 "기여자"로 초대합니다.</p>'}</div></details>`;
   return h;
 }
 const p2=n=>String(n).padStart(2,'0');
@@ -861,7 +940,9 @@ function render(){
   const ae=document.activeElement;
   if(ae&&/INPUT|TEXTAREA/.test(ae.tagName)&&$('#main').contains(ae)){E.pending=true;return}
   if(Date.now()-(E.wt||0)<600&&$('#main .wheelset')){E.pending=true;clearTimeout(render.t);render.t=setTimeout(()=>{if(E.pending)render()},650);return}
-  E.pending=false;head();
+  E.pending=false;syncSet();
+  {const tb=tabsFor();if(E.tab!=='conf'&&!tb.includes(E.tab))E.tab=tb[0]}
+  head();
   if(E.role&&E.tab===(E.role==='mom'?'mom':'dad')&&unread())markSeen();
   const v=E.tab==='dad'?viewDad():E.tab==='check'?viewCheck():E.tab==='grow'?viewGrow():E.tab==='conf'?viewConf():viewMom();
   $('#main').innerHTML=v;bind();
@@ -935,17 +1016,18 @@ function devShift(unit,n){const d=new Date();if(unit==='d')d.setDate(d.getDate()
 function devAge(mo,day){const b=pdate(S.cfg.birth);const d=new Date(b.getFullYear(),b.getMonth()+mo,b.getDate()+day);devSetDate(d)}
 function devHTML(){
   const a=ageOf(S.cfg.birth,new Date()),mo=ageFloat(),now=new Date();
-  const card=cardById(E.picked?E.cardId:pickToday()),dd=daysTo(S.cfg.birth,30);
+  const card=cardById(E.picked?E.cardId:pickToday()),tA=mo<CURSET?CURSET:nextSetAge(mo),dd=tA?daysTo(S.cfg.birth,tA):0;
   const lo=Math.max(0,Math.floor(mo)-10),hi=lo+22;
   let h=`<h3 style="margin:0 0 6px">개발자 모드</h3><p class="muted">기준일을 옮기면 앱 전체의 '오늘'이 같이 바뀝니다. 기록은 실제 데이터와 분리 저장돼요.</p>
   <div class="dv-grid">
    <b>기준일</b><span>${ymd(now)} (${DOW[now.getDay()]})${DEV.off?` · 실제보다 ${Math.round(DEV.off/864e5)}일`:' · 실제 오늘'}</span>
    <b>아이 월령</b><span>만 ${a.mo}개월 ${a.d}일 (${mo}개월)</span>
-   <b>30개월까지</b><span>${dd>0?'D-'+dd:'+'+(-dd)+'일 지남'}</span>
+   <b>다음 이정표</b><span>${tA?tA+'개월까지 '+(dd>0?'D-'+dd:'+'+(-dd)+'일'):'마지막 세트'}</span>
    <b>오늘의 놀이</b><span>${card?esc(card.t):'-'}</span>
-   <b>이정표 세트</b><span>CDC 30개월 한 가지(월령별 전환 없음)</span>
+   <b>이정표 세트</b><span>${CURSET}개월 세트${MSETS[CURSET].ready?'':' (원문 대조 전 초안)'} · 놀이 카드 ${cardPool().length}/${CARDS.length}개</span>
    <b>성장 그래프</b><span>${lo}~${hi}개월 구간, WHO 월령 ${Math.round(mo)}</span>
   </div>
+  <div class="q">보기 역할</div><div class="dv-row">${[['all','전체'],['dad','아빠'],['mom','엄마']].map(x=>`<button class="btn sm ${DEV.view===x[0]?'':'ghost'}" data-dview="${x[0]}">${x[1]}</button>`).join('')}<button class="btn sm ${DEV.draft?'':'ghost'}" data-ddraft>초안 콘텐츠 ${DEV.draft?'켬':'끔'}</button></div>
   <div class="q">날짜 이동</div><div class="dv-row">${[['d',-30,'-1개월'],['d',-7,'-1주'],['d',-1,'-1일'],['d',1,'+1일'],['d',7,'+1주'],['d',30,'+1개월']].map(x=>`<button class="btn sm ghost" data-dshift="${x[0]}:${x[1]}">${x[2]}</button>`).join('')}<button class="btn sm" data-dreset>오늘로</button></div>
   <div class="q">날짜 직접 지정</div><div class="dv-row"><input type="date" id="devdate" value="${ymd(now)}"><button class="btn sm" data-ddate>이동</button></div>
   <div class="q">월령으로 지정 (생일 기준)</div><div class="dv-row"><input type="number" id="devmo" min="0" max="72" value="${a.mo}" style="width:72px">개월<input type="number" id="devday" min="0" max="30" value="${a.d}" style="width:64px">일<button class="btn sm" data-dage>이동</button></div>`;
@@ -973,6 +1055,8 @@ function devUpdate(){
       const t=e.target.closest('button,[data-dshift]');if(!t)return;
       if(t.id==='devtog'){E.devOpen=!E.devOpen;devUpdate();return}
       if(t.dataset.dshift){const [u,n]=t.dataset.dshift.split(':');devShift(u,Number(n))}
+      else if(t.dataset.dview){DEV.view=t.dataset.dview;try{localStorage.setItem('dpn_dev_view',DEV.view)}catch(x){}if(DEV.view!=='all')E.role=DEV.view;else{try{const r=localStorage.getItem('role');E.role=(r==='dad'||r==='mom')?r:'dad'}catch(x){E.role='dad'}}E.picked=false;render()}
+      else if('ddraft' in t.dataset){DEV.draft=!DEV.draft;try{localStorage.setItem('dpn_dev_draft',DEV.draft?'1':'0')}catch(x){}E.picked=false;render()}
       else if('dreset' in t.dataset){devSetDate(new Date(RealDate.now()))}
       else if('ddate' in t.dataset){const v=document.getElementById('devdate').value;if(v)devSetDate(pdate(v))}
       else if('dage' in t.dataset){devAge(Number(document.getElementById('devmo').value||0),Number(document.getElementById('devday').value||0))}
@@ -1055,6 +1139,7 @@ if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)&&typeof clau
   if(E.uid){
     try{const me=await db.doc('data/users/'+E.uid+'/me').get();if(me.exists){const d=me.data();if(d.role==='dad'||d.role==='mom')E.role=d.role;if(d.seen)E.seen=d.seen}}catch(e){}
   }
+  if(DEV.on&&DEV.view!=='all')E.role=DEV.view;
   if(!location.hash){E.tab=E.role==='mom'||(!E.canWrite&&!E.role)?'mom':'dad'}
   const er=e=>{if(e&&e.code==='revoked'){E.db=null;render()}};
   db.doc('config/child').onSnapshot(s=>{if(s.exists){S.cfg=Object.assign({},S.cfg,s.data());E.cfgSet=true}render()},er);

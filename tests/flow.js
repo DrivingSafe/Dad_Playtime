@@ -57,7 +57,8 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
  ok(st.n==='하늘'&&st.ms&&st.pl===1&&st.m===1&&st.c===1&&st.f===1&&st.role==='dad','새로고침 후 데이터 유지 '+JSON.stringify(st));
 
  // 모든 탭이 오류 없이 렌더
- for(const t of ['dad','check','grow','mom','conf']){await p.click(`[data-tab="${t}"]`);await p.waitForTimeout(150);ok((await p.textContent('#main')).length>50,'탭 렌더 '+t)}
+ ok(!(await p.isVisible('[data-tab="mom"]')),'아빠 역할에는 엄마의 눈 탭이 안 보임');
+ for(const t of ['dad','check','grow','conf']){await p.click(`[data-tab="${t}"]`);await p.waitForTimeout(150);ok((await p.textContent('#main')).length>50,'탭 렌더 '+t)}
  ok(!errs.length,'페이지 오류 없음 '+errs);
  await b.close();srv.close();process.exit(fails?1:0);
 })();
