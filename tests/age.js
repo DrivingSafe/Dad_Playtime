@@ -13,9 +13,10 @@ const setup=async p=>{await p.click('[data-ssex="f"]');await p.click('[data-srol
   const ctx=await b.newContext({...devices['Pixel 7']});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
   await p.goto(url);await p.waitForTimeout(600);await setup(p);
   const at=async mo=>p.evaluate(m=>{const d=new Date();d.setMonth(d.getMonth()-m);S.cfg.birth=ymd(d);E.picked=false;render();return{set:CURSET,n:MS.length,ids:MS.map(x=>x.id),pool:cardPool().map(c=>c.id),ages:setAges()}},mo);
-  let r=await at(20);ok(r.set===30&&r.ages.join()==='30,36','공개: 20개월은 30개월 세트 ('+r.set+')');
-  ok(!r.ids.some(i=>/^x(18|24)/.test(i)),'공개: 초안(18·24) 이정표 없음');
-  ok(!r.pool.some(id=>['push18','scribble18'].includes(id)),'공개: 초안 카드 없음');
+  let r=await at(20);ok(r.set===18&&r.ages.join()==='18,24,30,36'&&r.n===15,'공개: 20개월은 18개월 세트 15개 ('+r.set+'/'+r.n+')');
+  ok(r.ids.every(i=>/^x18/.test(i)),'공개: 18개월 항목만 표시');
+  ok(r.pool.includes('push18')&&!r.pool.includes('book'),'공개: 20개월 카드 풀은 12~23개월용');
+  r=await at(26);ok(r.set===24&&r.n===13,'공개: 26개월은 24개월 세트 13개 ('+r.set+'/'+r.n+')');
   r=await at(32);ok(r.set===30&&r.n===15,'공개: 32개월 30개월 세트 15개');
   r=await at(40);ok(r.set===36&&r.n===12,'공개: 40개월 36개월 세트 12개 ('+r.n+')');
   ok(r.pool.includes('beads')&&r.pool.includes('whyq')&&!r.pool.includes('book'),'공개: 40개월 카드 풀은 36개월용');
@@ -32,16 +33,10 @@ const setup=async p=>{await p.click('[data-ssex="f"]');await p.click('[data-srol
   const ctx=await b.newContext({...devices['Pixel 7']});const p=await ctx.newPage();const errs=[];p.on('pageerror',e=>errs.push(e.message));
   await p.goto(url+'?dev=1');await p.waitForTimeout(700);await setup(p);
   const at=async mo=>p.evaluate(m=>{const d=new Date();d.setMonth(d.getMonth()-m);S.cfg.birth=ymd(d);E.picked=false;E.tab='check';render();return{set:CURSET,draft:!MSETS[CURSET].ready,pool:cardPool().map(c=>c.id)}},mo);
-  let r=await at(20);ok(r.set===18&&r.draft,'개발자: 20개월 → 18개월 초안 세트');
-  ok(r.pool.includes('push18'),'개발자: 18개월대 초안 카드 포함');
-  ok((await p.textContent('#main')).includes('원문 대조 전 초안'),'개발자: 초안 표시 문구');
-  r=await at(26);ok(r.set===24&&r.draft,'개발자: 26개월 → 24개월 초안 세트');
-  r=await at(32);ok(r.set===30&&!r.draft,'개발자: 32개월 → 30개월 세트');
+  let r=await at(20);ok(r.set===18,'개발자: 20개월 → 18개월 세트');
+  r=await at(26);ok(r.set===24,'개발자: 26개월 → 24개월 세트');
+  r=await at(32);ok(r.set===30,'개발자: 32개월 → 30개월 세트');
   r=await at(40);ok(r.set===36,'개발자: 40개월 → 36개월 세트');
-  // 초안 끄기 → 공개와 동일
-  await p.evaluate(()=>{DEV.draft=false;const d=new Date();d.setMonth(d.getMonth()-20);S.cfg.birth=ymd(d);render()});
-  ok(await p.evaluate(()=>CURSET===30),'개발자: 초안 끄면 공개와 같음');
-  await p.evaluate(()=>{DEV.draft=true});
   // ---- 역할별 탭 ----
   const vis=async()=>p.evaluate(()=>[...document.querySelectorAll('nav button')].filter(b=>!b.hidden).map(b=>b.dataset.tab).join());
   await p.click('#devtog');await p.waitForTimeout(200);
