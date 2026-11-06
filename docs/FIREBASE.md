@@ -1,0 +1,54 @@
+# Firebase 연결 (가족 연결)
+
+엄마·아빠 폰이 같은 기록을 실시간으로 보게 하는 기능. **연결하기 전에는 지금처럼 이 기기에만 저장**되고, 한 사람이 "새로 시작"으로 초대 코드를 받아 다른 사람이 입력하면 연결된다.
+
+## 프로젝트
+- Firebase 프로젝트 `dad-playtime` (웹 앱 설정값은 `index.html`의 `FB_CFG`, 공개돼도 되는 값)
+- 앱은 **Authentication(익명 로그인)** 과 **Firestore** 만 쓴다. **Analytics는 불러오지 않는다**(`measurementId`는 일부러 넣지 않음). 프로젝트 설정에서 Analytics가 켜져 있어도 앱은 수집하지 않는다.
+
+## 콘솔에서 해야 할 일 (한 번만)
+1. **Authentication → 로그인 방법 → 익명 → 사용 설정**
+2. **Authentication → 설정 → 승인된 도메인**에 `drivingsafe.github.io` 추가
+3. **Firestore Database**가 서울(`asia-northeast3`)에 만들어져 있어야 한다
+4. **Firestore → 규칙 탭에 `firestore.rules` 내용을 그대로 붙여 넣고 [게시]** ← 이걸 안 하면 연결이 동작하지 않는다(프로덕션 모드 기본 규칙은 모두 거부)
+
+규칙을 CLI로 올리려면: `firebase deploy --only firestore:rules --project dad-playtime` (`firebase.json`, `.firebaserc` 포함)
+
+## 데이터 구조
+```
+users/{uid}                    { familyId, role }          내 가족 연결 정보 (본인만)
+invites/{CODE6}                { familyId, role, createdBy, usedBy, expiresAt, … }
+families/{fid}                 { createdBy, createdAt }
+families/{fid}/members/{uid}   { role, joinedAt, seen, inviteCode }
+families/{fid}/roles/{role}    { uid, at }                 역할 자리표: 엄마 1·아빠 1
+families/{fid}/{config|ms|plays|log|body|assign|msgs|conf|fb|errands|memo|shelf|growth}/{id}   앱 데이터
+```
+
+## 연결 흐름
+1. **새로 시작**(먼저 시작한 사람): 동의 → 한 번의 요청(batch)으로 가족·내 구성원·역할 자리표·초대(상대 역할, 7일, 1회용)를 만들고, 이 기기의 기존 기록(아이 정보, 놀이·도서 기록, 심부름, 메모 등)을 가족 저장소로 옮긴다. 6자리 코드와 링크(`?join=코드`)를 보여 준다.
+2. **합류**(상대): 링크를 열거나 코드를 입력 → 동의 → 코드 확인(만료·사용 여부) → 상대 역할로 합류. 이 기기의 기존 로컬 기록은 합치지 않는다.
+3. 이후 두 폰은 실시간으로 같은 기록을 본다. 연결 정보는 기기의 `dpn_fam`에 저장된다.
+4. **이 폰 연결 해제**: 내 구성원·역할 자리표 삭제(상대 폰과 기록은 그대로). 코드가 만료되면 "새 초대 코드 만들기".
+5. **가족 기록 모두 삭제**: 가족의 모든 데이터 문서를 지운다(두 폰 모두에서 사라짐).
+- **개발자 모드(`?dev=1`)는 항상 로컬 샌드박스**라 가족 기록을 건드리지 않는다.
+- SDK/서버에 연결하지 못하면 쓰기를 막고 "가족 기록을 불러오지 못했어요"를 보여 준다(엉뚱한 곳에 저장되는 것 방지). Firebase SDK는 서비스 워커가 캐시한다.
+
+## 보안 규칙 요점 (`firestore.rules`)
+- 가족 데이터는 그 가족 **구성원만** 읽고 쓴다.
+- 초대 문서는 코드를 **정확히 알 때만 읽기(get)** 가능, 목록 조회 금지, 삭제 금지.
+- 합류는 **유효한(만료 전·미사용·상대 역할) 초대 + 같은 요청에서 초대를 "사용됨"으로 표시 + 역할 자리표 생성**이 모두 있어야 한다 → 초대는 한 번만, 한 역할에 한 명만.
+- 구성원은 자기 역할을 바꿀 수 없고(읽은 시각 `seen`만 갱신), 다른 사람의 구성원 문서를 못 지운다.
+- 에뮬레이터로 **49개 규칙 테스트**를 통과했다. 이 과정에서 두 가지 우회(초대 소진 생략, 같은 역할 중복 합류)를 찾아 고쳤다.
+
+## 테스트
+```bash
+cd tests/rules && npm install              # 최초 1회 (Java 11+ 필요)
+npm test                                   # 보안 규칙 49개 (에뮬레이터)
+npm run test:family                        # 브라우저 end-to-end 31개: 실제 SDK + 에뮬레이터 + 실제 규칙, 폰 2~3대
+```
+
+## 알려진 한계
+- 익명 로그인이라 **브라우저 데이터를 지우면 가족 접근을 잃는다**. 복구 코드(또는 구글·이메일 연결)는 아직 없다. 그전에는 연결 전에 백업 파일을 저장해 두자(연결 후에는 서버에 기록이 남아 있으니, 폰을 바꾸면 상대 폰에서 새 코드를 만들어 합류).
+- 한 역할 자리표는 그 역할 본인이 연결을 해제할 때만 풀린다. 기기를 잃어버려 해제하지 못하면 그 자리가 막히므로 복구 기능이 필요하다.
+- 푸시 알림(엄마 폰 알림)은 Cloud Functions(유료 Blaze)가 필요해서 아직 없다.
+- 공개 전에는 처리방침(`docs/PRIVACY-DRAFT.md`)과 App Check 설정이 필요하다.

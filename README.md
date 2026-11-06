@@ -12,6 +12,10 @@
 | `docs/DATA-SOURCES.md` | 발달 기준·성장 기준 출처와 법적 확인 항목 |
 | `docs/CHANGELOG.md` | 버전별 변경 |
 | `tests/smoke.js` | 생일 휠·백분위 점검(가짜 Artifact 저장소) |
+| `docs/FIREBASE.md` | 가족 연결(Firebase) 설정·구조·보안 규칙·테스트 방법 |
+| `docs/PRIVACY-DRAFT.md` | 개인정보 처리방침 초안(공개 전 검토 필요) |
+| `firestore.rules` | Firestore 보안 규칙 (콘솔에 게시) |
+| `tests/family.js` · `tests/rules/` | 가족 연결 end-to-end(실제 SDK+에뮬레이터), 보안 규칙 49개 |
 | `docs/BOOKS-DATA.md` | 책 카테고리·추천 책·우리집 책장 데이터와 한계 |
 | `tests/errand.js` | 심부름·엄마 메모·책장·백업·설치·연속 일수 점검 |
 | `docs/TODAY-FLOW.md` | 오늘 화면 흐름(카드·타이머·보고·도감·체크인) |

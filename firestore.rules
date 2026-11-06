@@ -1,0 +1,93 @@
+rules_version = '2';
+
+// 15분 놀이수첩 보안 규칙
+// - 가족 데이터(families/{fid}/…)는 그 가족 구성원만 읽고 쓴다.
+// - 가족은 최대 엄마·아빠 2명: 초대 코드(7일, 1회용, 상대 역할 전용)로만 합류한다.
+// - 초대 문서는 코드를 정확히 아는 사람만 읽을 수 있다(목록 조회 금지).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function member(fid, uid) { return /databases/$(database)/documents/families/$(fid)/members/$(uid); }
+    function isMember(fid) { return signedIn() && exists(member(fid, request.auth.uid)); }
+    function roleOk(r) { return r in ['dad', 'mom']; }
+    function roleDoc(fid, r) { return /databases/$(database)/documents/families/$(fid)/roles/$(r); }
+
+    // 내 가족 연결 정보 (본인만)
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // 초대 코드
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      // 새 가족을 만드는 같은 요청 안이거나 이미 구성원일 때, 내 역할과 반대 역할로만, 만료 시각 필수
+      allow create: if signedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.usedBy == null
+        && roleOk(request.resource.data.role)
+        && request.resource.data.expiresAt is number
+        && request.resource.data.expiresAt > request.time.toMillis()
+        && request.resource.data.expiresAt <= request.time.toMillis() + 8 * 24 * 60 * 60 * 1000
+        && existsAfter(member(request.resource.data.familyId, request.auth.uid))
+        && getAfter(member(request.resource.data.familyId, request.auth.uid)).data.role != request.resource.data.role;
+      // 합류하는 같은 요청 안에서만, 쓴 사람과 시각만 기록
+      allow update: if signedIn()
+        && resource.data.usedBy == null
+        && request.resource.data.usedBy == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedBy', 'usedAt'])
+        && existsAfter(member(resource.data.familyId, request.auth.uid));
+      allow delete: if false;
+    }
+
+    match /families/{fid} {
+      allow read: if isMember(fid);
+      allow create: if signedIn() && request.resource.data.createdBy == request.auth.uid;
+      allow update: if false;
+      allow delete: if isMember(fid) && resource.data.createdBy == request.auth.uid;
+
+      match /members/{uid} {
+        allow read: if isMember(fid);
+        // 가족을 만든 사람(같은 요청에서 만든 가족의 createdBy가 본인) 또는 유효한 초대 코드를 가진 사람
+        // 역할 자리표(roles/{role})를 같은 요청에서 만들어야 한다 → 한 역할에 한 명만
+        allow create: if signedIn() && request.auth.uid == uid
+          && roleOk(request.resource.data.role)
+          && existsAfter(roleDoc(fid, request.resource.data.role))
+          && (
+            getAfter(/databases/$(database)/documents/families/$(fid)).data.createdBy == request.auth.uid
+            || (
+              request.resource.data.inviteCode is string
+              && get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.familyId == fid
+              && get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.usedBy == null
+              && get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.expiresAt > request.time.toMillis()
+              && get(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.role == request.resource.data.role
+              // 같은 요청에서 초대를 "사용됨"으로 표시해야 한다 (한 번만 쓸 수 있게)
+              && getAfter(/databases/$(database)/documents/invites/$(request.resource.data.inviteCode)).data.usedBy == request.auth.uid
+            )
+          );
+        // 역할은 바꿀 수 없고 읽은 시각(seen)만 갱신
+        allow update: if signedIn() && request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['seen']);
+        // 이 기기 연결 해제
+        allow delete: if signedIn() && request.auth.uid == uid;
+      }
+
+      // 역할 자리표: 엄마 1명, 아빠 1명. 한 번 만들면 다시 만들 수 없고, 그 역할의 본인만 지울 수 있다(연결 해제)
+      match /roles/{role} {
+        allow read: if isMember(fid);
+        allow create: if signedIn() && roleOk(role)
+          && existsAfter(member(fid, request.auth.uid))
+          && getAfter(member(fid, request.auth.uid)).data.role == role;
+        allow update: if false;
+        allow delete: if signedIn() && exists(member(fid, request.auth.uid))
+          && get(member(fid, request.auth.uid)).data.role == role;
+      }
+
+      // 아이 정보·놀이 기록·심부름·메모 등 모든 가족 데이터
+      match /{coll}/{doc} {
+        allow read, write: if isMember(fid) && coll != 'members' && coll != 'roles';
+      }
+    }
+  }
+}
