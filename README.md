@@ -12,6 +12,8 @@
 | `docs/DATA-SOURCES.md` | 발달 기준·성장 기준 출처와 법적 확인 항목 |
 | `docs/CHANGELOG.md` | 버전별 변경 |
 | `tests/smoke.js` | 생일 휠·백분위 점검(가짜 Artifact 저장소) |
+| `docs/BOOKS-DATA.md` | 책 카테고리·추천 책·우리집 책장 데이터와 한계 |
+| `tests/errand.js` | 심부름·엄마 메모·책장·백업·설치·연속 일수 점검 |
 | `docs/TODAY-FLOW.md` | 오늘 화면 흐름(카드·타이머·보고·도감·체크인) |
 | `tests/session.js` | 오늘 카드·타이머·보고·엄마 지시·도감·체크인·개발자 진입 점검 |
 | `docs/TOOLS-DATA.md` | 0~36개월 도구·책·안전 데이터(`data/tools.json`) 구조와 한계 |

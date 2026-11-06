@@ -21,7 +21,7 @@
 users/{uid}                  { familyId, role, nick }
 families/{fid}               { createdBy, createdAt, childAlias, birthYM, sex }
 families/{fid}/members/{uid} { role, joinedAt }
-families/{fid}/ms|plays|body|msgs|conf|fb/...   (지금 앱의 컬렉션과 같은 모양, 가족 아래로 이동)
+families/{fid}/ms|plays|body|msgs|conf|fb|errands|memo|shelf/...   (지금 앱의 컬렉션과 같은 모양, 가족 아래로 이동)
 invites/{code}               { familyId, role(남은 역할), expiresAt, usedBy }
 ```
 

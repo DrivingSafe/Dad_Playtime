@@ -343,6 +343,27 @@ body.noscroll{overflow:hidden}
 .repbox{white-space:pre-line;background:var(--soft);border-radius:14px;padding:12px 14px;font-size:14px;line-height:1.6;margin:10px 0}
 .msg{white-space:pre-line}
 .tcard ul.plain li{margin:2px 0}
+
+/* ===== v0.14 심부름·메모·책 카테고리·백업 ===== */
+.chiprow.wrap{flex-wrap:wrap;overflow:visible}
+.errow{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.errow:first-of-type{border-top:0}
+.ecb{flex:0 0 auto;width:34px;height:34px;border-radius:50%;border:2px solid var(--pri);background:transparent;cursor:pointer;position:relative;touch-action:manipulation}
+.ecb[aria-pressed="true"]{background:var(--pri)}
+.ecb[aria-pressed="true"]::after{content:"✓";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--pri-ink);font-weight:700}
+.etx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;font-size:16px}
+.etx small{font-size:12px;color:var(--ink2)}
+.errow.done .etx span{text-decoration:line-through;color:var(--ink2)}
+.edel{flex:0 0 auto;width:40px;height:40px;border:0;border-radius:50%;background:transparent;color:var(--ink2);font-size:16px;cursor:pointer}
+.memo{border-left:5px solid var(--sun)}
+.streak{background:var(--warn-bg);border-radius:14px;padding:9px 14px;font-weight:700;font-size:14px}
+.sugg{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line)}
+.sugg:first-of-type{border-top:0}
+.sugg span{display:flex;flex-direction:column;min-width:0}.sugg small{font-size:12px;color:var(--ink2)}
+.sugg .btn{flex:0 0 auto}
+.shelfform{background:var(--card);border-radius:16px;padding:14px;margin:8px 0;box-shadow:var(--shadow)}
+nav button .dot{position:absolute;top:2px;left:calc(50% + 6px)}
+nav button:has(.dot){position:relative}
 </style>
 </head>
 <body>
@@ -357,9 +378,10 @@ body.noscroll{overflow:hidden}
 </div>
 <div class="tabbar"><nav role="tablist" aria-label="화면">
   <button role="tab" data-tab="dad"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M10 8.5l5 3.5-5 3.5z"/></svg><span>아빠의 놀이</span><i class="dot" hidden></i></button>
+  <button role="tab" data-tab="mom"><svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg><span>엄마의 눈</span><i class="dot" hidden></i></button>
+  <button role="tab" data-tab="errand"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="3"/><path d="M9 4h6v3H9z"/><path d="M9 14l2 2 4-4"/></svg><span>심부름</span><i class="dot" hidden></i></button>
   <button role="tab" data-tab="check"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg><span>발달 체크</span></button>
   <button role="tab" data-tab="grow"><svg viewBox="0 0 24 24"><path d="M4 19h16"/><path d="M6 16l4-5 3 3 5-7"/></svg><span>키·몸무게</span></button>
-  <button role="tab" data-tab="mom"><svg viewBox="0 0 24 24"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/></svg><span>엄마의 눈</span><i class="dot" hidden></i></button>
 </nav></div>
 <div id="minibar" hidden><div class="mb-l"><span class="mb-ic">⏱</span><div class="mb-tx"><b class="mb-title"></b><small class="mb-sub"></small></div></div><span class="mb-time"></span><button class="mb-btn" data-mbend>끝내기</button></div>
 <div id="sheet" hidden></div>
@@ -612,9 +634,9 @@ const BK=['거의 못함','1~2번','3~4번','5번 이상'];
 const RX=['잘 따라함','보통','힘들어함'];
 
 /* ---------- 상태 ---------- */
-const VERSION='0.13';
+const VERSION='0.14';
 const DEF_BIRTH=(()=>{const d=new Date();d.setMonth(d.getMonth()-30);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
-const S={cfg:{name:'우리 아이',birth:DEF_BIRTH,sex:'',ck:''},ms:{},plays:[],log:[],body:[],growth:[],ref:{},assign:{},assignBook:{},assignTs:{},msgs:[],conf:{},fb:[]};
+const S={cfg:{name:'우리 아이',birth:DEF_BIRTH,sex:'',ck:''},ms:{},plays:[],log:[],body:[],growth:[],ref:{},assign:{},assignBook:{},assignTs:{},errands:[],memo:{},shelf:[],msgs:[],conf:{},fb:[]};
 const E={op:{},mk:null,gk:null,cbirth:'',role:null,srole:null,seen:0,sname:'',fbtext:'',fbfeat:'dad',db:null,uid:null,canWrite:true,tab:'dad',cfgSet:false,cardId:null,picked:false,mins:15,left:900,running:false,tick:null,pending:false,rx:null,bk:null,sbirth:'',ssex:'',gh:null,gw:null,gwarn:null,loaded:false};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -677,6 +699,7 @@ const FEATS=[
   {id:'msg',t:'칭찬·채찍질 메시지'}
 ];
 const CHANGES=[
+  {v:'0.14',d:'2026-11-06',l:['심부름 탭: 엄마가 "커피 사와" 같은 부탁을 적고 아빠가 체크, 아빠 오늘 화면에도 표시','엄마 전달 메모(아이 상태)가 아빠 화면 맨 위에','책: 카테고리별 읽는 법과 확인된 추천 책, 우리집 책장 등록, 책장 책부터 오늘의 도서','기록 백업(내보내기·불러오기), 홈 화면 설치 안내, 연속 일수']},
   {v:'0.13',d:'2026-11-06',l:['놀이마다 시간이 정해져 있지 않아요: 오늘 목표 시간(15·30분)을 따로 두고, 첫 놀이를 시작하면 그날의 카운트다운이 시작','놀이는 끝날 때마다 "완료" → 다음 추천이 나오고 또 골라서 하기 → 오늘 마무리하면 완료한 것을 엄마에게 한 번에 보고','카드 틀과 버튼은 고정하고 내용만 옆으로 미끄러지는 방식으로 변경 (회전·부채꼴 제거)']},
   {v:'0.12',d:'2026-11-06',l:['오늘 화면: 오늘의 놀이·오늘의 도서 카드(뒤에 겹친 카드, 스와이프 애니메이션), "이걸로 하기"로 바로 카운트다운 시작','타이머를 화면 위 바로 분리·고정. 새로고침해도 이어가고, 끝나면 알람 후 "엄마에게 보고할까요?"','놀이·도서·도구마다 다른 보고 기준, 고른 카드 기억, 엄마가 놀이·도서 지시','도감을 전체 화면 시트(탭·필터 칩·2열 카드)로, 발달 체크인(요즘 잘 하나요?), 개발자 역할 전환(이름 7번 탭)']},
   {v:'0.11',d:'2026-11-06',l:['0~36개월 도구·책 데이터셋 반영: 공공·의학 기관(트랙 A) 41개를 뼈대로, 엄마들 후기(트랙 B) 22개는 같은 유형 아래 "엄마들이 많이 쓰는 예"로 표시','안전 약속(작은 부품, 바퀴 달린 보행기 금지 등)을 월령별로 표시','0~36개월 놀이 카드 21개 추가']},
@@ -824,6 +847,7 @@ function head(){
   });
   $('#confbtn').setAttribute('aria-pressed',String(E.tab==='conf'));
   document.querySelectorAll('nav button').forEach(b=>{b.hidden=!tabsFor().includes(b.dataset.tab)});
+  {const ed=document.querySelector('nav [data-tab="errand"] .dot');if(ed){const n=E.role==='mom'?0:errandOpen().length;ed.hidden=!n||E.tab==='errand';ed.textContent=n}}
   devUpdate();
   $('#age').innerHTML=E.cfgSet?'만 '+a.mo+'<small>개월</small>'+a.d+'<small>일</small>':'<small style="font-size:18px;margin:0">생일을 입력해 주세요</small>';
   $('#foot').innerHTML='<b>참고용 안내</b> 이 앱의 내용은 의학적 진단·치료 조언이 아닙니다. 걱정되는 점은 소아과나 영유아 건강검진에서 상담하세요.<br><br>발달 기준: 미국 CDC "Learn the Signs. Act Early." 이정표(30개월·3세, 2026년 5월 개정본)를 바탕으로 한국어로 옮기고 단순화했습니다. 이정표는 아이의 75% 이상이 해당 월령까지 하는 행동입니다. 원문은 <a href="https://www.cdc.gov/act-early/milestones/index.html" target="_blank" rel="noopener">cdc.gov/act-early</a>에서 볼 수 있습니다. 이 앱은 CDC·HHS가 제작하거나 승인하거나 보증한 것이 아니며, 진단이나 선별검사가 아니고 영유아 건강검진(K-DST)과 소아과 상담을 대체하지 않습니다. 놀이 카드 중 "자체 구성"은 이정표를 바탕으로 만든 예시입니다.'+(Object.keys(S.ref).length?' 키·몸무게 기준: WHO Child Growth Standards.':'')+(E.db?'':' 지금은 저장되지 않는 미리보기 상태입니다.')+(E.local?'<br><br><b>저장 방식</b> 이 앱에는 서버가 없습니다. 입력한 내용은 이 기기의 브라우저에만 저장되고 개발자나 다른 사용자에게 전송되지 않습니다. 브라우저 데이터를 지우거나 앱을 삭제하면 기록이 사라지며, 다른 기기와는 공유되지 않습니다. 엄마·아빠 메시지와 지시는 한 기기를 같이 쓸 때만 보입니다.':'');
@@ -834,9 +858,9 @@ function scrollToSoon(sel,block){requestAnimationFrame(()=>setTimeout(()=>{const
 function scrollTopSoon(){requestAnimationFrame(()=>setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),80))}
 /* 역할별 탭: 아빠는 '엄마의 눈'이, 엄마는 '아빠의 놀이'가 보이지 않는다. 개발자 모드의 보기 역할이 '전체'면 모두 보인다. */
 function tabsFor(){
-  if(DEV.on&&DEV.view==='all')return ['dad','check','grow','mom'];
-  if(E.role==='mom')return ['mom','check','grow'];
-  return ['dad','check','grow'];
+  if(DEV.on&&DEV.view==='all')return ['dad','mom','errand','check','grow'];
+  if(E.role==='mom')return ['mom','errand','check','grow'];
+  return ['dad','errand','check','grow'];
 }
 function setupNext(){
   const needKid=!(E.cfgSet&&S.cfg.sex);
@@ -880,25 +904,174 @@ function pickLoad(){try{const o=JSON.parse(localStorage.getItem(PK_KEY)||'{}');r
 let PICK=pickLoad();
 function pickSave(){try{localStorage.setItem(PK_KEY,JSON.stringify(PICK))}catch(e){}}
 const toolById=id=>(TOOLS.tools||[]).find(t=>t.id===id);
-const bookPool=()=>{const mo=ageFloat();return (TOOLS.tools||[]).filter(t=>t.track==='A'&&t.cat==='book'&&inShow(t,mo))};
 const itemList=kind=>kind==='play'?ranked():bookPool();
-const itemTitle=(kind,id)=>{if(kind==='play'){const c=cardById(id);return c?c.t:''}const t=toolById(id);return t?t.name:''};
+const itemTitle=(kind,id)=>{if(kind==='play'){const c=cardById(id);return c?c.t:''}if(kind==='book'){const b=bookById(id);return b?b.name:''}const t=toolById(id);return t?t.name:''};
+/* ===== v0.14 책 카테고리·우리집 책장 / 심부름 / 엄마 메모 / 백업 ===== */
+let BOOKS={cats:[],books:[]};
+async function loadBooks(){try{const r=await fetch('data/books.json');if(r.ok){BOOKS=await r.json();render()}}catch(e){}}
+const CAT=id=>(BOOKS.cats||[]).find(c=>c.id===id);
+const shelfBooks=()=>(S.shelf||[]).filter(x=>!x.del);
+const inAges=(a,mo)=>!a||(mo>=a[0]&&mo<=a[1]+.99);
+const qs=s=>encodeURIComponent(s);
+function bookLinks(t){
+  const q=t.kind==='catalog'&&t.raw?t.raw.title:t.name;
+  return `<p class="tmeta"><a href="https://search.kyobobook.co.kr/search?keyword=${qs(q)}" target="_blank" rel="noopener">서점에서 찾기</a> · <a href="https://search.naver.com/search.naver?query=${qs(q+' 도서관')}" target="_blank" rel="noopener">도서관에서 찾기</a></p>`;
+}
+/* 오늘의 책 후보: ① 우리집 책장 ② 카테고리 읽기 카드("집에 있는 ○○ 책 아무거나") ③ 확인된 추천 책 ④ 북스타트 등 */
+function bookById(id){
+  if(id.startsWith('sh:')){const x=(S.shelf||[]).find(s=>'sh:'+s.id===id&&!s.del);if(!x)return null;const c=CAT(x.cat)||{};
+    return{id,name:x.title,kind:'shelf',cat:x.cat,tip:c.tip||'아이와 함께 그림을 보며 읽어요',label:'우리집 책장'+(c.name?' · '+c.name:''),note:'',shelfId:x.id}}
+  if(id.startsWith('cg:')){const c=CAT(id.slice(3));if(!c)return null;
+    return{id,name:`집에 있는 ${c.name} 책 아무거나`,kind:'cat',cat:c.id,tip:c.tip,label:c.name+' · 읽는 법',note:''}}
+  if(id.startsWith('bk:')){const b=(BOOKS.books||[]).find(x=>'bk:'+x.id===id);if(!b)return null;const c=CAT(b.cat)||{};
+    return{id,name:b.series?`${b.series} - ${b.title}`:b.title,kind:'catalog',cat:b.cat,tip:c.tip,label:[c.name,b.pub].filter(Boolean).join(' · '),note:b.note||'',raw:b}}
+  const t=toolById(id);if(!t)return null;
+  return Object.assign({},t,{kind:'tool',label:`${srcLabel(t.src)} · ${RELN[t.rel]||t.rel}`});
+}
+function bookIds(all){
+  const mo=ageFloat(),ids=[];
+  shelfBooks().forEach(s=>ids.push('sh:'+s.id));
+  (BOOKS.cats||[]).filter(c=>c.id!=='series').forEach(c=>{if(all||inAges(c.ages,mo))ids.push('cg:'+c.id)});
+  (BOOKS.books||[]).forEach(b=>{if((all||inAges(b.age,mo))&&!shelfBooks().some(s=>s.cid===b.id))ids.push('bk:'+b.id)});
+  (TOOLS.tools||[]).filter(t=>t.track==='A'&&t.cat==='book'&&(all||inShow(t,mo))).forEach(t=>ids.push(t.id));
+  return ids;
+}
+const bookCandidates=all=>bookIds(all).map(bookById).filter(Boolean);
+const bookPool=()=>bookCandidates(false);
+/* 책장이 있으면 책장 책부터, 없으면 카테고리(동물→자연→숫자…)를 날짜마다 돌려 가며 */
+function recBookId(){
+  const pool=bookPool();if(!pool.length)return null;
+  const recent=new Set(S.plays.filter(p=>p.date>=dayAgo(5)&&p.kind==='book').map(p=>p.card));
+  const f=k=>pool.filter(b=>b.kind===k&&!recent.has(b.id));
+  const c=f('shelf').length?f('shelf'):f('cat').length?f('cat'):pool.filter(b=>!recent.has(b.id)).length?pool.filter(b=>!recent.has(b.id)):pool;
+  return c[dayNum()%c.length].id;
+}
+async function shelfAdd(title,cat,cid){
+  const t=(title||'').trim();if(!t)return false;
+  if(shelfBooks().some(s=>s.title===t||(cid&&s.cid===cid))){toast('이미 책장에 있어요.');return false}
+  const ts=Date.now(),id='s'+ts,rec={title:t.slice(0,60),cat:cat||'',cid:cid||'',ts};
+  S.shelf.unshift(Object.assign({id},rec));toast('우리집 책장에 넣었어요.');
+  try{await put('shelf/'+id,rec)}catch(e){}
+  return true;
+}
+async function shelfDel(id){
+  const s=S.shelf.find(x=>x.id===id);if(!s)return;s.del=1;toast('책장에서 뺐어요.');
+  try{await put('shelf/'+id,{title:s.title,cat:s.cat,cid:s.cid||'',ts:s.ts,del:1})}catch(e){}
+}
+async function shelfToggle(bk){
+  const b=(BOOKS.books||[]).find(x=>x.id===bk);if(!b)return;
+  const s=shelfBooks().find(x=>x.cid===b.id);
+  if(s)await shelfDel(s.id);else await shelfAdd(b.title,b.cat,b.id);
+}
+function catSuggest(catId){
+  const c=CAT(catId)||{},L=(BOOKS.books||[]).filter(b=>b.cat===catId).slice(0,4);
+  const rows=L.map(b=>{const own=shelfBooks().some(s=>s.cid===b.id);
+    return `<div class="sugg"><span><b>${esc(b.series?b.series+' - '+b.title:b.title)}</b><small>${esc([b.pub,b.ages].filter(Boolean).join(' · '))}</small></span><button class="btn ghost sm" data-shelftoggle="${b.id}">${own?'✓ 책장에 있음':'책장에 추가'}</button></div>`}).join('');
+  return `<div class="tcat">이런 ${esc(c.name||'')} 책이 있어요</div>${rows||`<p class="tmeta">확인된 한국어 책을 아직 찾지 못했어요. 집에 있는 책을 직접 등록하거나 검색해 보세요. <a href="https://search.naver.com/search.naver?query=${qs('0~3세 '+(c.name||'')+' 보드북')}" target="_blank" rel="noopener">검색</a></p>`}
+  <div style="margin-top:6px"><button class="link" data-shelfopen="${esc(catId)}">+ 우리집에 있는 ${esc(c.name||'')} 책 등록</button></div>`;
+}
+
+/* ---------- 심부름: 엄마가 적고 아빠가 체크 ---------- */
+const DUEN={wayhome:'퇴근길에',today:'오늘 안에',any:'언제든'};
+const ERR_QUICK=['커피','우유','기저귀','물티슈','삼겹살','과일','약'];
+const errandOpen=()=>(S.errands||[]).filter(e=>!e.done&&!e.del);
+async function addErrand(text,due){
+  const t=(text||'').trim();if(!t)return;
+  const ts=Date.now(),rec={text:t.slice(0,80),by:E.role||'mom',ts,done:0,doneTs:0,doneBy:'',due:due||'wayhome'};
+  S.errands.unshift(Object.assign({id:'e'+ts},rec));E.errText='';render();toast('심부름에 적어 뒀어요.');
+  try{await put('errands/e'+ts,rec)}catch(e){}
+}
+const errRec=e=>({text:e.text,by:e.by,ts:e.ts,done:e.done?1:0,doneTs:e.doneTs||0,doneBy:e.doneBy||'',due:e.due||'wayhome',del:e.del?1:0});
+async function toggleErrand(id){
+  const e=S.errands.find(x=>x.id===id);if(!e)return;
+  e.done=e.done?0:1;e.doneTs=e.done?Date.now():0;e.doneBy=e.done?(E.role||'dad'):'';render();
+  if(e.done)toast('고마워요! 완료했어요.');
+  try{await put('errands/'+id,errRec(e))}catch(x){}
+}
+async function delErrand(id){const e=S.errands.find(x=>x.id===id);if(!e)return;e.del=1;render();try{await put('errands/'+id,errRec(e))}catch(x){}}
+function errRow(e,del){
+  const who=r=>r==='dad'?'아빠':'엄마';
+  return `<div class="errow${e.done?' done':''}"><button class="ecb" data-etoggle="${e.id}" aria-pressed="${!!e.done}" aria-label="${e.done?'완료 취소':'완료'}"></button>
+    <div class="etx"><span>${esc(e.text)}</span><small>${esc(DUEN[e.due]||'')} · ${who(e.by)}가 적음${e.done?' · '+who(e.doneBy)+' 완료':''}</small></div>
+    ${del&&e.by===(E.role||'mom')?`<button class="edel" data-edel="${e.id}" aria-label="삭제">✕</button>`:''}</div>`;
+}
+function errandMini(){
+  const o=errandOpen();if(!o.length)return '';
+  return `<section class="card" id="errmini"><div class="row between"><b>심부름 ${o.length}개</b><button class="link" data-gotab="errand">모두 보기</button></div>${o.slice(0,3).map(e=>errRow(e,false)).join('')}${o.length>3?`<p class="tmeta">외 ${o.length-3}개</p>`:''}</section>`;
+}
+function viewErrand(){
+  const isMom=E.role==='mom',open=errandOpen(),done=(S.errands||[]).filter(e=>e.done&&!e.del).slice(0,20);
+  return `<p class="lead"><b>${isMom?'아빠에게 부탁할 일':'엄마가 부탁한 일'}</b><br>${isMom?'카톡에 묻히지 않게 여기에 적어 두세요. 아빠 오늘 화면에도 떠요.':'하나씩 체크하면 엄마 화면에도 완료로 보여요.'}</p>
+  <section class="card"><label class="field">할 일<input id="errtext" type="text" maxlength="80" enterkeyhint="done" placeholder="예: 커피 사와 / 오는 길에 삼겹살 사와" value="${esc(E.errText||'')}"></label>
+    <div class="chiprow wrap" style="margin-top:8px">${ERR_QUICK.map(q=>`<button class="fchip" data-equick="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+    <div class="seg wide" style="margin-top:10px">${Object.keys(DUEN).map(k=>`<button data-edue="${k}" aria-pressed="${(E.errDue||'wayhome')===k}">${DUEN[k]}</button>`).join('')}</div>
+    <div style="margin-top:12px"><button class="btn big" data-eadd>추가</button></div></section>
+  <section class="card"><b>해야 할 일 ${open.length}개</b>${open.length?open.map(e=>errRow(e,true)).join(''):'<p class="muted" style="margin-top:8px">없어요! 🎉</p>'}</section>
+  ${done.length?`<details class="fold" data-k="edone"${isOpen('edone',false)?' open':''}><summary>완료한 일<span class="sub">${done.length}개</span></summary><div class="fbody">${done.map(e=>errRow(e,false)).join('')}</div></details>`:''}`;
+}
+
+/* ---------- 엄마 메모: 오늘 아이 상태를 아빠 화면 맨 위로 ---------- */
+const MEMO_CHIPS=['낮잠 잘 잤어요','낮잠 안 잤어요','밥 잘 먹었어요','밥 잘 안 먹었어요','응가 했어요','열이 있어요','기침·콧물','기분 좋아요','짜증이 많아요'];
+const memoToday=()=>(S.memo||{})[today()]||null;
+function memoCardMom(){
+  const m=memoToday(),chips=E.memoChips||(m?m.chips:[]),text=E.memoText!=null?E.memoText:(m?m.text:'');
+  return `<section class="card"><h2>아빠에게 전달 메모</h2><p class="muted">오늘 아이 상태를 적어 두면 아빠 화면 맨 위에 보여요.</p>
+    <div class="chiprow wrap" style="margin-top:8px">${MEMO_CHIPS.map(c=>`<button class="fchip" data-memochip="${esc(c)}" aria-pressed="${chips.includes(c)}">${esc(c)}</button>`).join('')}</div>
+    <label class="field" style="margin-top:10px">한 줄 메모<input id="memotext" type="text" maxlength="120" placeholder="예: 3시쯤 한 번 울었어요" value="${esc(text)}"></label>
+    <div class="row" style="margin-top:10px"><button class="btn" data-memosave>저장</button>${m?`<span class="muted">${esc(fdt(m.ts))} 저장함</span>`:''}</div></section>`;
+}
+function memoShow(){
+  const m=memoToday();if(!m||(!(m.chips||[]).length&&!m.text))return '';
+  return `<section class="card memo" id="memocard"><div class="eyebrow">엄마 메모 · 오늘</div><div class="chips" style="margin-top:6px">${(m.chips||[]).map(c=>`<span class="chip">${esc(c)}</span>`).join('')}</div>${m.text?`<p style="margin-top:6px">${esc(m.text)}</p>`:''}<p class="tmeta">${esc(fdt(m.ts))}</p></section>`;
+}
+async function saveMemo(){
+  const m=memoToday(),chips=E.memoChips||(m?m.chips:[]),inp=document.getElementById('memotext'),text=(inp?inp.value:(E.memoText!=null?E.memoText:(m?m.text:''))).trim();
+  const rec={chips,text:text.slice(0,120),ts:Date.now(),by:E.role||'mom',date:today()};
+  S.memo[today()]=rec;E.memoChips=null;E.memoText=null;render();toast('아빠 화면에 보여요.');
+  try{await put('memo/'+today(),rec)}catch(e){}
+}
+
+/* ---------- 백업·설치 ---------- */
+const BK_KEYS=['role','dpn_pick','dpn_day','dpn_act','dpn_goal','dpn_ck','dpn_dev','dpn_dev_off','dpn_dev_view','dpn_dev_draft'];
+function exportData(){
+  const keys={};
+  try{[DEV.on?'dpn_db_dev':'dpn_db',...BK_KEYS].forEach(k=>{const v=localStorage.getItem(k);if(v!=null)keys[k]=v})}catch(e){}
+  const blob=new Blob([JSON.stringify({app:'15min-play-notebook',v:1,saved:new Date().toISOString(),keys})],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='놀이수첩-백업-'+today()+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+  toast('백업 파일을 저장했어요.');
+}
+function importData(file){
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const o=JSON.parse(rd.result);if(!o||o.app!=='15min-play-notebook'||!o.keys)throw new Error('형식');
+      if(!confirm('이 기기의 기록을 백업 파일 내용으로 바꿔요. 계속할까요?'))return;
+      Object.keys(o.keys).forEach(k=>{if(k==='dpn_db'||k==='dpn_db_dev'||BK_KEYS.includes(k))localStorage.setItem(k,o.keys[k])});
+      toast('불러왔어요. 다시 시작해요.');setTimeout(()=>location.reload(),600);
+    }catch(e){toast('백업 파일이 아니에요.')}
+  };
+  rd.readAsText(file);
+}
+let DEFERRED=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();DEFERRED=e;try{if(E.tab==='conf')render()}catch(x){}});
+const isStandalone=()=>{try{return window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true}catch(e){return false}};
+function backupCard(){
+  return `<section class="card"><h3>내 기록 백업</h3><p class="muted" style="margin:4px 0 8px">기록은 이 기기에만 저장돼요. 폰을 바꾸거나 브라우저 데이터를 지우면 사라지니 가끔 파일로 저장해 두세요.</p>
+  <div class="row" style="gap:8px"><button class="btn ghost" data-export>백업 파일 저장</button><button class="btn ghost" data-importbtn>백업 불러오기</button><input type="file" id="importfile" accept="application/json,.json" hidden></div></section>
+  <section class="card"><h3>홈 화면에 설치</h3><p class="muted" style="margin:4px 0 8px">${isStandalone()?'설치한 앱으로 열었어요 ✓':'설치하면 주소창 없이 앱처럼 열려요.'}</p>
+  ${isStandalone()?'':(DEFERRED?'<button class="btn" data-install>앱 설치하기</button>':'<p class="muted">안드로이드 크롬: 메뉴(⋮) → 앱 설치. 아이폰: 사파리 공유 버튼 → 홈 화면에 추가.</p>')}</section>`;
+}
+
 function recPlayId(){
   const recent=new Set(S.plays.filter(p=>p.date>=dayAgo(5)).map(p=>p.card));
   let pool=ranked().filter(c=>!recent.has(c.id));if(pool.length<4)pool=ranked();
   const top=pool.slice(0,6);return top.length?top[dayNum()%top.length].id:null;
 }
-function recBookId(){
-  const pool=bookPool();if(!pool.length)return null;
-  const recent=new Set(S.plays.filter(p=>p.date>=dayAgo(5)&&p.kind==='book').map(p=>p.card));
-  let c=pool.filter(t=>!recent.has(t.id));if(!c.length)c=pool;
-  return c[dayNum()%c.length].id;
-}
 /* 오늘 무엇을 보여 줄지: 시작해서 잠근 것 > (엄마 지시보다 늦게) 내가 고른 것 > 엄마 지시 > 시스템 추천. 새로고침해도 그대로 */
 function resolveItem(kind){
   if(PICK.date!==today())PICK={date:today()};
   const lock=PICK[kind+'Lock'],pid=PICK[kind+'Id'],pts=PICK[kind+'Ts']||0;
-  const valid=id=>!!id&&(kind==='play'?!!cardById(id):!!toolById(id));
+  const valid=id=>!!id&&(kind==='play'?!!cardById(id):!!bookById(id));
   const asId=kind==='play'?S.assign[today()]:S.assignBook[today()],ats=S.assignTs[today()]||0;
   if(valid(pid)&&(lock||!asId||pts>ats))return{id:pid,why:'mine'};
   if(valid(asId)&&!S.plays.some(p=>p.date===today()&&p.card===asId&&p.ts>ats))return{id:asId,why:'mom'};
@@ -1093,10 +1266,12 @@ function missionCard(kind){
     body=`<ol class="steps">${c.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol>`;
     if(GOAL>=30)extra=`<div class="extra"><b>30분 확장</b> ${esc(c.x30)}</div>`;
   }else{
-    const t=toolById(P.id);title=t.name;
-    chips=`<span class="chip">${t.type==='named'?'실제 도서':'도서 유형'}</span><span class="src">${esc(srcLabel(t.src))} · ${esc(RELN[t.rel]||t.rel)}</span>`;
+    const t=bookById(P.id);title=t.name;
+    const cn=(CAT(t.cat)||{}).name||'';
+    chips=`<span class="chip">${t.kind==='shelf'?'우리집 책장':t.kind==='cat'?cn+' 책':t.kind==='catalog'?'추천 책':(t.type==='named'?'실제 도서':'도서 유형')}</span><span class="src">${esc(t.label||'')}</span>`;
     body=`<ol class="steps"><li>${esc(t.tip&&t.tip!=='—'?t.tip:'아이와 함께 그림을 보며 읽어요')}</li></ol>${t.note?`<p class="tmeta">${esc(t.note)}</p>`:''}`;
-    if(t.type==='named'&&t.avail==='unverified')alt='<p class="tmeta">구입·대출 가능 여부는 확인되지 않았어요. 도서관에서 찾아보세요.</p>';
+    if(t.kind==='cat')alt=catSuggest(t.cat);
+    else if(t.kind==='catalog'||(t.kind==='tool'&&t.type==='named'&&t.avail==='unverified'))alt='<p class="tmeta">우리집에 없으면 도서관에서 빌리거나 서점에서 찾아보세요.</p>'+bookLinks(t)+(t.kind==='catalog'&&t.raw?`<div style="margin-top:6px"><button class="btn ghost sm" data-shelftoggle="${t.raw.id}">${shelfBooks().some(x=>x.cid===t.raw.id)?'✓ 책장에 있음':'우리집에 있어요 (책장에 추가)'}</button></div>`:'');
   }
   const label=active?'진행 중… 위에서 완료를 눌러요':busy?'다른 놀이 진행 중':dayActive()?'이걸로 하기':`이걸로 시작 · 오늘 ${GOAL}분 카운트`;
   const inner=`<section class="mcard" id="card-${kind}" data-kind="${kind}">
@@ -1131,7 +1306,7 @@ const DOMF=Object.keys(DOM).map(d=>[d,DOM[d].n]);
 function libFilters(){
   const t=E.lib.tab;
   if(t==='play')return [['all','전체'],['rec','추천'],...DOMF,['new','안 해 본 놀이'],['often','자주 한 놀이']];
-  if(t==='book')return [['all','전체'],['named','실제 도서명'],['generic','도서 유형']];
+  if(t==='book')return [['all','전체'],['mine','우리집 책장'],...(BOOKS.cats||[]).map(c=>[c.id,c.name]),['bs','북스타트·기관']];
   return [['all','전체'],...Object.keys(CATN).filter(c=>c!=='book').map(c=>[c,CATN[c]])];
 }
 function libItems(){
@@ -1145,12 +1320,15 @@ function libItems(){
     else if(L.filter==='often')list=list.filter(c=>(byCard[c.id]||[]).length>=2);
     return list.map(c=>({kind:'play',id:c.id,title:c.t,doms:c.doms,meta:`${c.age[0]}~${Math.min(c.age[1],72)}개월`}));
   }
-  const A=T.filter(t=>t.track==='A'&&(L.all||inShow(t,mo)));
   if(L.tab==='book'){
-    let l=A.filter(t=>t.cat==='book');
-    if(L.filter==='named')l=l.filter(t=>t.type==='named');else if(L.filter==='generic')l=l.filter(t=>t.type==='generic');
-    return l.map(t=>({kind:'book',id:t.id,title:t.name,meta:`${t.show[0]}~${t.show[1]}개월`}));
+    let l=bookCandidates(!!L.all);
+    if(L.filter==='mine')l=l.filter(b=>b.kind==='shelf');
+    else if(L.filter==='bs')l=l.filter(b=>b.kind==='tool');
+    else if(L.filter!=='all')l=l.filter(b=>b.cat===L.filter);
+    const kn={shelf:'우리집',cat:'읽는 법',catalog:'추천 책',tool:'기관'};
+    return l.map(b=>({kind:'book',id:b.id,title:b.name,meta:kn[b.kind]+(b.cat&&CAT(b.cat)?' · '+CAT(b.cat).name:'')}));
   }
+  const A=T.filter(t=>t.track==='A'&&(L.all||inShow(t,mo)));
   let l=A.filter(t=>t.cat!=='book');if(CATN[L.filter])l=l.filter(t=>t.cat===L.filter);
   return l.map(t=>({kind:'tool',id:t.id,title:t.name,meta:`${CATN[t.cat]} · ${t.show[0]}~${t.show[1]}개월`}));
 }
@@ -1160,6 +1338,7 @@ function libHTML(){
   return `<div class="lib-top"><b>도감</b><button class="xbtn" data-libclose aria-label="닫기">✕</button></div>
   <div class="seg wide lib-tabs">${tabs.map(t=>`<button data-ltab="${t[0]}" aria-pressed="${L.tab===t[0]}">${t[1]}</button>`).join('')}</div>
   <div class="chiprow">${libFilters().map(f=>`<button class="fchip" data-lfilter="${f[0]}" aria-pressed="${L.filter===f[0]}">${esc(f[1])}</button>`).join('')}</div>
+  ${L.tab==='book'?libShelfForm():''}
   <div class="lib-opt"><label><input type="checkbox" data-lall ${L.all?'checked':''}> 다른 월령도 보기</label><span class="muted">${items.length}개</span></div>
   <div class="tiles">${items.map(it=>`<button class="tile" data-ltile="${it.kind}:${it.id}"><b>${esc(it.title)}</b>${it.doms?`<span class="dots">${it.doms.map(d=>`<i class="${DOM[d].c}"></i>`).join('')}</span>`:''}<small>${esc(it.meta)}</small></button>`).join('')||'<p class="muted" style="grid-column:1/-1">조건에 맞는 항목이 없어요.</p>'}</div>`;
 }
@@ -1170,6 +1349,15 @@ function libDetail(){
     h=`<h2 class="order" style="font-size:24px">${esc(c.t)}</h2><div class="chips">${c.doms.map(d=>`<span class="chip ${DOM[d].c}">${DOM[d].n}</span>`).join('')}<span class="src">${esc(c.src)} · ${c.age[0]}~${Math.min(c.age[1],72)}개월</span></div>
     <ol class="steps">${c.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol><div class="extra"><b>30분 확장</b> ${esc(c.x30)}</div>`;
     btn='오늘의 놀이로 고르기';
+  }else if(kind==='book'){
+    const b=bookById(id),cn=(CAT(b.cat)||{}).name;
+    h=`<h2 class="order" style="font-size:22px">${esc(b.name)}</h2><div class="chips"><span class="chip">${b.kind==='shelf'?'우리집 책장':b.kind==='cat'?'읽는 법':b.kind==='catalog'?'추천 책':'기관 추천'}</span><span class="src">${esc(b.label||'')}</span></div>
+    <p style="margin:10px 0">${esc(b.tip||'아이와 함께 그림을 보며 읽어요')}</p>${b.note?`<p class="tmeta">${esc(b.note)}</p>`:''}
+    ${b.kind==='catalog'&&b.raw?`<p class="tmeta">${esc([b.raw.ages,b.raw.src].filter(Boolean).join(' · '))}${b.raw.url?` · <a href="${esc(b.raw.url)}" target="_blank" rel="noopener">출처</a>`:''}</p>`:''}
+    ${b.kind==='cat'?catSuggest(b.cat):''}
+    ${b.kind==='catalog'||b.kind==='tool'&&b.type==='named'?bookLinks(b):''}
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">${b.kind==='catalog'&&b.raw?`<button class="btn ghost sm" data-shelftoggle="${b.raw.id}">${shelfBooks().some(x=>x.cid===b.raw.id)?'✓ 책장에 있음 (빼기)':'우리집에 있어요 (책장에 추가)'}</button>`:''}${b.kind==='shelf'?`<button class="btn ghost sm" data-shelfdel="${b.shelfId}">책장에서 빼기</button>`:''}</div>`;
+    btn='오늘의 도서로 고르기';
   }else{
     const t=toolById(id),bs=(TOOLS.tools||[]).filter(b=>b.track==='B'&&b.of===t.id);
     h=`<h2 class="order" style="font-size:22px">${esc(t.name)}</h2><div class="chips"><span class="chip">${CATN[t.cat]}</span><span class="src">${esc(srcLabel(t.src))} · ${esc(RELN[t.rel]||t.rel)} · ${t.show[0]}~${t.show[1]}개월</span></div>
@@ -1177,16 +1365,27 @@ function libDetail(){
     <p class="tmeta">근거 월령: ${esc(t.mo_src)}${t.note?' · '+esc(t.note):''}</p>
     ${ageFloat()<36?'<p class="tnote" style="margin-top:8px">36개월 미만은 작은 부품이 없는 도구만 써요.</p>':''}
     ${bs.length?`<div class="tcat">엄마들이 많이 쓰는 예</div>${bs.map(b=>`<div class="bitem"><b>${esc(b.name)}</b> <span class="tag">${esc(RELN[b.rel]||b.rel)}</span>${b.flags.map(f=>`<span class="tag warn">${esc(FLAGN[f]||f)}</span>`).join('')}${b.limits?`<div class="tmeta">사용 한계: ${esc(b.limits)}</div>`:''}</div>`).join('')}`:''}`;
-    btn=kind==='book'?'오늘의 도서로 고르기':'이걸로 하기 (바로 시작)';
+    btn='이걸로 하기 (바로 시작)';
   }
   return `<div class="lib-top"><button class="link" data-libback>‹ 목록</button><button class="xbtn" data-libclose aria-label="닫기">✕</button></div><div class="lib-detail">${h}</div>
   <div class="sheet-bar"><button class="btn big" data-libpick>${btn}</button></div>`;
 }
 function openLib(tab){E.lib={tab:tab||'play',filter:'all',all:false,sel:null};sheetShow(libHTML(),'full')}
+function libShelfForm(){
+  const L=E.lib;if(!L.addOpen)return `<div style="margin:8px 0"><button class="btn ghost sm" data-shelfform>+ 우리집 책 추가</button></div>`;
+  return `<div class="shelfform"><label class="field">우리집 책 제목<input id="shelftitle" type="text" maxlength="60" placeholder="예: 까이유 - 처음 하는 일" value="${esc(L.addTitle||'')}"></label>
+  <div class="q">종류</div><div class="chiprow wrap">${(BOOKS.cats||[]).map(c=>`<button class="fchip" data-shelfcat="${c.id}" aria-pressed="${L.addCat===c.id}">${esc(c.name)}</button>`).join('')}</div>
+  <div class="row" style="margin-top:10px;gap:8px"><button class="btn sm" data-shelfsave>책장에 넣기</button><button class="link" data-shelfform>닫기</button></div></div>`;
+}
 function libRender(){const b=document.querySelector('#sheet .sheet-body');if(!b||!E.lib)return;const y=b.scrollTop;b.innerHTML=libHTML();b.scrollTop=E.lib.sel?0:y}
 function sheetClick(e){
-  const t=e.target.closest('[data-sheetclose],[data-libclose],[data-ltab],[data-lfilter],[data-ltile],[data-libback],[data-libpick],[data-frx],[data-fbk],[data-fin]');if(!t)return;
+  const t=e.target.closest('[data-shelftoggle],[data-shelfdel],[data-shelfform],[data-shelfsave],[data-shelfcat],[data-sheetclose],[data-libclose],[data-ltab],[data-lfilter],[data-ltile],[data-libback],[data-libpick],[data-frx],[data-fbk],[data-fin]');if(!t)return;
   const d=t.dataset;
+  if(d.shelftoggle){shelfToggle(d.shelftoggle).then(()=>{if(E.lib)libRender();render()});return}
+  if(d.shelfdel){shelfDel(d.shelfdel).then(()=>{if(E.lib){E.lib.sel=null;libRender()}render()});return}
+  if('shelfform' in d){const i=document.getElementById('shelftitle');if(i&&E.lib)E.lib.addTitle=i.value;E.lib.addOpen=!E.lib.addOpen;libRender();return}
+  if(d.shelfcat){const i=document.getElementById('shelftitle');if(i)E.lib.addTitle=i.value;E.lib.addCat=d.shelfcat;libRender();return}
+  if('shelfsave' in d){const i=document.getElementById('shelftitle');const ti=i?i.value:'';shelfAdd(ti,E.lib.addCat,'').then(ok=>{if(ok){E.lib.addOpen=false;E.lib.addTitle='';E.lib.addCat='';libRender();render()}});return}
   if('libclose' in d||('sheetclose' in d&&E.lib)){E.lib=null;sheetHide();return}
   if('sheetclose' in d){if(ACT||sheetOpen()){sheetHide()}return}
   if(d.ltab){E.lib.tab=d.ltab;E.lib.filter='all';libRender();return}
@@ -1290,10 +1489,11 @@ function safetyFold(){
     ${avoid.map(x=>`<div class="avoid"><b>쓰지 마세요</b> ${esc(x.text)}<span class="tmeta"> · ${esc(srcLabel(x.src))}</span></div>`).join('')}
     ${L.filter(x=>x.kind!=='avoid').map(x=>`<div class="srule">${esc(x.text)}<span class="tmeta"> · ${esc(srcLabel(x.src))}</span></div>`).join('')}</div></details>`;
 }
+function streakChip(){const n=streak();return n>=2?`<div class="streak">🔥 ${n}일 연속 놀이 중이에요</div>`:''}
 function viewDad(){
   const P=resolveItem('play');E.cardId=P.id;
   const c=cardById(P.id);
-  return setupCard()+inboxCard()+goalRow()+missionCard('play')+missionCard('book')+todayCard()+checkinCard()+`
+  return setupCard()+inboxCard()+memoShow()+errandMini()+streakChip()+goalRow()+missionCard('play')+missionCard('book')+todayCard()+checkinCard()+`
   <button class="card libcard" data-openlib><span><b>놀이·도서·도구 도감</b><small>${CARDS.length}개 놀이 · ${(TOOLS.tools||[]).filter(t=>t.track==='A').length}개 도서·도구 · 카테고리별로 보기</small></span><span class="chev">›</span></button>
   ${recFold()}
   ${c?itemsFold(c):''}
@@ -1395,6 +1595,7 @@ function viewMom(){
   <div class="bigstat"><b>${doneDays}</b><span>/ 7일</span>${st?`<em>연속 ${st}일</em>`:''}</div>
   <div class="dots">${days.map((d,i)=>`<div class="dd ${mins[i]?'on':''}"><i></i><span>${dayName[pdate(d).getDay()]}</span></div>`).join('')}</div>
   <p class="summary">${esc(J(nm(),'은','는'))} 만 <b>${a.mo}개월 ${a.d}일</b>. 이번 주 총 <b>${wk}분</b>.${doneDays>=5?' 합격.':(doneDays===0?' 이행 기록이 없습니다.':' 아직 부족합니다.')}${ups.length?` 발달 체크 ${ups.length}개 항목이 올랐어요.`:''}</p></section>`;
+  h+=memoCardMom();
   h+=`<section class="card"><h2>아빠에게 한마디</h2>
   <div class="seg wide" style="margin-top:10px"><button data-mk="praise" aria-pressed="${E.mk==='praise'}">칭찬</button><button data-mk="push" aria-pressed="${E.mk==='push'}">채찍질</button></div>
   <div class="msglist">${MSGS[E.mk].map((t,i)=>`<button class="btn ghost" data-msg="${E.mk}:${i}"${dis}>${esc(msgText(t))}</button>`).join('')}</div>
@@ -1463,6 +1664,7 @@ function viewConf(){
   <div style="margin-top:12px"><button class="btn" id="fbsend"${dis}>남기기</button></div>
   ${S.fb.length?`<div class="msgbox" style="margin-top:16px">${S.fb.slice(0,20).map(f=>{const ft=FEATS.find(x=>x.id===f.feat);return `<div class="msg"><span class="by">${f.by==='mom'?'엄마':'아빠'} · ${esc(ft?ft.t.split(':')[0]:'')} · ${f.done?'반영됨':'대기'}</span>${esc(f.text)}<div class="row between"><small>${fdt(f.ts)}</small><button class="btn ghost sm" data-donefb="${f.id}"${dis}>${f.done?'반영 취소':'반영됨 표시'}</button></div></div>`}).join('')}</div>`:''}</section>`;
   h+=E.local?`<section class="card"><h3>이 기기에만 저장돼요</h3><p class="muted" style="margin-top:4px">컨펌·의견은 이 기기 안에만 남습니다. 개발자에게 의견을 보내려면 ${FEEDBACK_URL?`<a href="${esc(FEEDBACK_URL)}" target="_blank" rel="noopener">의견 보내기</a>를 이용해 주세요.`:'안내받은 방법(메신저·댓글)으로 알려 주세요.'}</p></section>`:`<details class="fold" data-k="inv"${isOpen('inv',false)?' open':''}><summary>엄마 초대 방법</summary><div class="fbody"><ol style="margin:0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:4px"><li>이 페이지 공유 메뉴를 연다</li><li>엄마 이메일로 초대한다</li><li>권한은 "기여자"로 한다 (보기만이면 컨펌·메시지를 못 보낸다)</li><li>엄마는 링크를 열고 "엄마"를 한 번 고른다</li></ol></div></details>`;
+  if(E.local)h+=backupCard();
   if(E.local)h+=`<section class="card"><h3>내 역할</h3><p class="muted" style="margin:4px 0 8px">이 기기에서 누구로 쓸지 바꿔요. 아빠는 놀이·체크·성장, 엄마는 엄마의 눈·체크·성장 탭이 보여요.</p><div class="seg wide"><button data-myrole="dad" aria-pressed="${E.role!=='mom'}">아빠</button><button data-myrole="mom" aria-pressed="${E.role==='mom'}">엄마</button></div></section>`;
   if(E.local)h+=`<section class="card"><h3>개발자 모드</h3><p class="muted" style="margin:4px 0 8px">기준 날짜·월령을 옮기고, 아빠·엄마 화면을 바꿔 가며 볼 수 있어요.${DEV.on?' 켜져 있어요. 켜면 오른쪽 아래에 DEV 버튼, 위에 보기 역할 버튼이 보여요.':''}</p><div class="seg wide"><button data-devtoggle="0" aria-pressed="${!DEV.on}">꺼짐</button><button data-devtoggle="1" aria-pressed="${DEV.on}">켜짐</button></div></section>`;
   h+=`<details class="fold" data-k="chg"${isOpen('chg',false)?' open':''}><summary>변경 이력</summary><div class="fbody">${CHANGES.map(c=>`<div class="chlog"><b>v${c.v}</b> ${c.d}<ul style="margin:2px 0 0;padding-left:18px">${c.l.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`).join('')}</div></details>`;
@@ -1476,7 +1678,7 @@ function render(){
   {const tb=tabsFor();if(E.tab!=='conf'&&!tb.includes(E.tab))E.tab=tb[0]}
   head();
   if(E.role&&E.tab===(E.role==='mom'?'mom':'dad')&&unread())markSeen();
-  const v=E.tab==='dad'?viewDad():E.tab==='check'?viewCheck():E.tab==='grow'?viewGrow():E.tab==='conf'?viewConf():viewMom();
+  const v=E.tab==='dad'?viewDad():E.tab==='check'?viewCheck():E.tab==='grow'?viewGrow():E.tab==='conf'?viewConf():E.tab==='errand'?viewErrand():viewMom();
   $('#main').innerHTML=v;bind();
 }
 function bind(){
@@ -1484,6 +1686,22 @@ function bind(){
   m.querySelectorAll('details[data-k]').forEach(d=>d.addEventListener('toggle',()=>{E.op[d.dataset.k]=d.open}));
   m.querySelectorAll('[data-mk]').forEach(b=>b.onclick=()=>{E.mk=b.dataset.mk;render()});
   m.querySelectorAll('[data-gk]').forEach(b=>b.onclick=()=>{E.gk=b.dataset.gk;E.gh=g('gh')?Number(g('gh').value):E.gh;E.gw=g('gw')?Number(g('gw').value):E.gw;render()});
+  m.querySelectorAll('[data-etoggle]').forEach(b=>b.onclick=()=>toggleErrand(b.dataset.etoggle));
+  m.querySelectorAll('[data-edel]').forEach(b=>b.onclick=()=>delErrand(b.dataset.edel));
+  m.querySelectorAll('[data-gotab]').forEach(b=>b.onclick=()=>{E.tab=b.dataset.gotab;render();scrollTopSoon()});
+  m.querySelectorAll('[data-equick]').forEach(b=>b.onclick=()=>{E.errText=b.dataset.equick+' 사와';render()});
+  m.querySelectorAll('[data-edue]').forEach(b=>b.onclick=()=>{const t=g('errtext');if(t)E.errText=t.value;E.errDue=b.dataset.edue;render()});
+  if(g('errtext')){g('errtext').oninput=e=>{E.errText=e.target.value};g('errtext').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();E.errText=e.target.value;e.target.blur();addErrand(E.errText,E.errDue)}}}
+  m.querySelectorAll('[data-eadd]').forEach(b=>b.onclick=()=>{const t=g('errtext');if(t)E.errText=t.value;addErrand(E.errText,E.errDue)});
+  m.querySelectorAll('[data-memochip]').forEach(b=>b.onclick=()=>{const mm=memoToday(),cur=(E.memoChips||(mm?mm.chips.slice():[])).slice(),c=b.dataset.memochip,i=cur.indexOf(c);if(i>=0)cur.splice(i,1);else cur.push(c);const t=g('memotext');if(t)E.memoText=t.value;E.memoChips=cur;render()});
+  if(g('memotext'))g('memotext').oninput=e=>{E.memoText=e.target.value};
+  m.querySelectorAll('[data-memosave]').forEach(b=>b.onclick=saveMemo);
+  m.querySelectorAll('[data-shelftoggle]').forEach(b=>b.onclick=()=>shelfToggle(b.dataset.shelftoggle).then(render));
+  m.querySelectorAll('[data-shelfopen]').forEach(b=>b.onclick=()=>{openLib('book');E.lib.addOpen=true;E.lib.addCat=b.dataset.shelfopen;libRender()});
+  m.querySelectorAll('[data-export]').forEach(b=>b.onclick=exportData);
+  m.querySelectorAll('[data-importbtn]').forEach(b=>b.onclick=()=>g('importfile').click());
+  if(g('importfile'))g('importfile').onchange=e=>{const f=e.target.files&&e.target.files[0];if(f)importData(f)};
+  m.querySelectorAll('[data-install]').forEach(b=>b.onclick=async()=>{if(DEFERRED){DEFERRED.prompt();try{await DEFERRED.userChoice}catch(e){}DEFERRED=null;render()}});
   m.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>{GOAL=Number(b.dataset.goal);lsSet(GOAL_KEY,GOAL);render()});
   m.querySelectorAll('[data-report]').forEach(b=>b.onclick=openReport);
   m.querySelectorAll('[data-ms]').forEach(b=>b.onclick=()=>setLevel(b.dataset.ms,Number(b.dataset.lv)));
@@ -1551,7 +1769,7 @@ function bind(){
 }
 document.addEventListener('focusout',()=>setTimeout(()=>{if(E.pending)render()},0));
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{E.tab=b.dataset.tab;try{location.hash=E.tab}catch(e){}render();window.scrollTo(0,0)});
-function fromHash(){let h=(location.hash||'').slice(1);if(h==='today')h='dad';if(h==='dash')h='mom';if(['dad','check','grow','mom','conf'].includes(h))E.tab=h}
+function fromHash(){let h=(location.hash||'').slice(1);if(h==='today')h='dad';if(h==='dash')h='mom';if(['dad','check','grow','mom','conf','errand'].includes(h))E.tab=h}
 window.addEventListener('hashchange',()=>{fromHash();render()});
 
 
@@ -1683,7 +1901,7 @@ if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)&&typeof clau
 
 /* ---------- 시작 ---------- */
 (async function init(){
-  fromHash();render();loadTools();
+  fromHash();render();loadTools();loadBooks();
   {let n=0,t0=0;const tap=()=>{const now=Date.now();if(now-t0>3000)n=0;t0=now;n++;if(n>=7){n=0;if(E.local)devToggleFromUI(!DEV.on)}};['who','age'].forEach(id=>{const el=document.getElementById(id);el.addEventListener('click',tap);el.addEventListener('contextmenu',e=>e.preventDefault());el.addEventListener('selectstart',e=>e.preventDefault())})}
   document.getElementById('sheet').addEventListener('click',sheetClick);
   document.getElementById('sheet').addEventListener('change',e=>{const t=e.target.closest('[data-lall]');if(t&&E.lib){E.lib.all=t.checked;libRender()}});
@@ -1713,6 +1931,9 @@ if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)&&typeof clau
   db.collection('msgs').orderBy('ts','desc').limit(60).onSnapshot(q=>{S.msgs=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},er);
   db.collection('conf').onSnapshot(q=>{const o={};q.docs.forEach(d=>o[d.id]=d.data());S.conf=o;render()},er);
   db.collection('fb').orderBy('ts','desc').limit(60).onSnapshot(q=>{S.fb=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},er);
+  db.collection('errands').orderBy('ts','desc').limit(200).onSnapshot(q=>{S.errands=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},er);
+  db.collection('memo').onSnapshot(q=>{const o={};q.docs.forEach(d=>o[d.id]=d.data());S.memo=o;render()},er);
+  db.collection('shelf').orderBy('ts','desc').limit(300).onSnapshot(q=>{S.shelf=q.docs.map(d=>Object.assign({id:d.id},d.data()));render()},er);
   db.collection('growth').limit(1000).onSnapshot(q=>{S.growth=q.docs.map(d=>d.data());render()},er);
   render();
 })();
