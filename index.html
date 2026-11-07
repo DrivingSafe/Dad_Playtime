@@ -650,7 +650,7 @@ const BK=['거의 못함','1~2번','3~4번','5번 이상'];
 const RX=['잘 따라함','보통','힘들어함'];
 
 /* ---------- 상태 ---------- */
-const VERSION='0.18.1';
+const VERSION='0.19';
 const DEF_BIRTH=(()=>{const d=new Date();d.setMonth(d.getMonth()-30);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const S={cfg:{name:'우리 아이',birth:DEF_BIRTH,sex:'',ck:''},ms:{},plays:[],log:[],body:[],growth:[],ref:{},assign:{},assignBook:{},assignTs:{},errands:[],memo:{},shelf:[],members:[],msgs:[],conf:{},fb:[]};
 const E={booting:true,op:{},mk:null,gk:null,cbirth:'',role:null,srole:null,seen:0,sname:'',fbtext:'',fbfeat:'dad',db:null,uid:null,canWrite:true,tab:'dad',cfgSet:false,cardId:null,picked:false,mins:15,left:900,running:false,tick:null,pending:false,rx:null,bk:null,sbirth:'',ssex:'',gh:null,gw:null,gwarn:null,loaded:false};
@@ -734,6 +734,7 @@ const FEATS=[
   {id:'msg',t:'칭찬·채찍질 메시지'}
 ];
 const CHANGES=[
+  {v:'0.19',d:'2026-11-07',l:['아이가 하자는 놀이를 검색(예: 퍼즐)하거나 직접 적어서 시작하고, 이미 한 놀이는 분 단위로 기록','자유 놀이도 하루 쌓인 시간·엄마 보고에 포함']},
   {v:'0.18.1',d:'2026-11-06',l:['가족 연결 상태에서 WHO 기준표를 못 불러오던 문제 수정 (공개 정적 파일에서 직접 읽음)','엄마가 바꾼 오늘 지시가 폰 시계 차이와 상관없이 아빠 화면에 우선 반영, 바뀌면 알림']},
   {v:'0.18',d:'2026-11-06',l:['시작을 누르면 바로 카운트다운, 완료하면 시간 적립이 멈추고 다음 놀이를 시작하면 이어서 쌓임','목표를 정하지 않으면 스톱워치로 위로 증가 (15·30·45·60분·스톱워치 중 선택)','하루 동안 쌓은 시간과 한 활동을 모아 마지막에 엄마에게 보고']},
   {v:'0.17.1',d:'2026-11-06',l:['새로고침할 때 아이 입력 창이 잠깐 보이던 문제 수정 (저장된 정보를 불러온 뒤에 화면을 그림)']},
@@ -952,14 +953,14 @@ function itemsFold(c){
 
 /* ===== v0.12 오늘 화면: 오늘의 놀이·도서 카드, 분리된 타이머, 보고 ===== */
 const BRX=['흥미 있게 끝까지 봤어요','조금 보다 말았어요','관심이 적었어요'];
-const KINDN={play:'놀이',book:'도서',tool:'도구 놀이'};
+const KINDN={play:'놀이',book:'도서',tool:'도구 놀이',free:'놀이'};
 const PK_KEY='dpn_pick',TM_KEY='dpn_timer';
 function pickLoad(){try{const o=JSON.parse(LS.getItem(PK_KEY)||'{}');return o.date===today()?o:{date:today()}}catch(e){return{date:today()}}}
 let PICK=pickLoad();
 function pickSave(){try{LS.setItem(PK_KEY,JSON.stringify(PICK))}catch(e){}}
 const toolById=id=>(TOOLS.tools||[]).find(t=>t.id===id);
 const itemList=kind=>kind==='play'?ranked():bookPool();
-const itemTitle=(kind,id)=>{if(kind==='play'){const c=cardById(id);return c?c.t:''}if(kind==='book'){const b=bookById(id);return b?b.name:''}const t=toolById(id);return t?t.name:''};
+const itemTitle=(kind,id)=>{if(kind==='free')return String(id||'').trim().slice(0,20);if(kind==='play'){const c=cardById(id);return c?c.t:''}if(kind==='book'){const b=bookById(id);return b?b.name:''}const t=toolById(id);return t?t.name:''};
 /* ===== v0.14 책 카테고리·우리집 책장 / 심부름 / 엄마 메모 / 백업 ===== */
 let BOOKS={cats:[],books:[]};
 async function loadBooks(){try{const r=await fetch('data/books.json');if(r.ok){BOOKS=await r.json();render()}}catch(e){}}
@@ -1208,13 +1209,53 @@ function timerTick(){
 /* 놀이 시작: 처음이면 그날의 카운트다운도 같이 시작 */
 function startActivity(kind,id){
   if(ACT){toast('진행 중인 놀이를 먼저 완료해 주세요.');return}
-  const title=itemTitle(kind==='tool'?'tool':kind,id);if(!title)return;
-  if(kind!=='tool'){PICK[kind+'Id']=id;PICK[kind+'Ts']=Date.now();PICK[kind+'Lock']=true;pickSave()}
+  const title=itemTitle(kind,id);if(!title)return;
+  if(kind==='play'||kind==='book'){PICK[kind+'Id']=id;PICK[kind+'Ts']=Date.now();PICK[kind+'Lock']=true;pickSave()}
   const now=Date.now();let first=false;
   if(!dayActive()){DAY.goal=GOAL;DAY.start=now;DAY.acc=0;DAY.state='running';DAY.goalShown=false;daySave();first=true}
   ACT={kind,id,title,start:now,date:today()};actSave();
   unlockAudio();askNotify();wakeOn();ensureTick();render();
   toast(first?(GOAL?`${GOAL}분 카운트다운 시작!`:'스톱워치 시작!'):'다시 시작! 끝나면 "완료"를 눌러요.');
+}
+/* ---------- 아이가 하자는 놀이: 검색해서 시작하거나, 이미 한 놀이를 분 단위로 기록 ---------- */
+const FP_QUICK=['퍼즐','블록','그림 그리기','공놀이','소꿉놀이','역할놀이','춤추기','목욕놀이','산책','숨바꼭질'];
+function fpSearch(q){
+  q=String(q||'').trim().toLowerCase();if(!q)return [];
+  const has=x=>String(x||'').toLowerCase().includes(q),out=[];
+  CARDS.forEach(c=>{if(has(c.t))out.push({kind:'play',id:c.id,title:c.t,meta:'놀이 카드'})});
+  (TOOLS.tools||[]).filter(t=>t.track==='A'&&t.cat!=='book').forEach(t=>{if(has(t.name))out.push({kind:'tool',id:t.id,title:t.name,meta:'도구 놀이'})});
+  try{bookCandidates(true).forEach(b=>{if(has(b.name))out.push({kind:'book',id:b.id,title:b.name,meta:'도서'})})}catch(e){}
+  return out.slice(0,10);
+}
+function fpResHTML(q){
+  q=String(q||'').trim().slice(0,20);
+  const r=fpSearch(q);
+  return (q?`<button class="card libcard" data-fppick="free:${esc(q)}"><span><b>"${esc(q)}" 그대로 기록</b><small>내가 적은 이름으로 기록해요</small></span><span class="chev">›</span></button>`:'')
+   +r.map(x=>`<button class="card libcard" data-fppick="${x.kind}:${esc(x.id)}"><span><b>${esc(x.title)}</b><small>${esc(x.meta)}</small></span><span class="chev">›</span></button>`).join('')
+   +(q?'':`<div class="chips">${FP_QUICK.map(w=>`<button class="btn sm ghost" data-fpquick="${esc(w)}">${esc(w)}</button>`).join('')}</div>`);
+}
+function fpHTML(){
+  return `<div class="sheet-grab"></div><h2>아이가 하자는 놀이</h2><p class="muted">놀이 이름을 검색하거나 적어요. 예: 퍼즐</p>
+  <label class="field"><input id="fpq" type="search" maxlength="20" placeholder="예: 퍼즐" autocomplete="off"></label>
+  <div id="fpres" style="display:flex;flex-direction:column;gap:8px;margin-top:10px">${fpResHTML('')}</div>
+  <div style="margin-top:10px"><button class="link" data-sheetclose>닫기</button></div>`;
+}
+function openFreePlay(){E.fp=null;sheetShow(fpHTML(),'fin')}
+function fpDetailHTML(){
+  const f=E.fp;
+  return `<div class="sheet-grab"></div><h2>${esc(f.title)}</h2><p class="muted">지금 시작하거나, 이미 한 시간을 기록해요.</p>
+  <div class="fin-actions"><button class="btn big" data-fpstart>시작 (시간 재기)</button></div>
+  <div class="q">이미 했어요 · 몇 분?</div>
+  <div class="chips">${[5,10,15,20,30,45,60].map(n=>`<button class="btn sm ghost" data-fplog="${n}">${n}분</button>`).join('')}</div>
+  <div style="margin-top:10px"><button class="link" data-fpback>다시 검색</button></div>`;
+}
+async function logPastPlay(f,mins){
+  const ts=Date.now(),rec={card:f.kind==='free'?'free:'+f.title:f.id,kind:f.kind,t:f.title,mins,ts,date:today()};
+  S.plays.unshift(Object.assign({id:'p'+ts},rec));
+  if(!dayActive()){DAY.goal=GOAL;DAY.start=ts;DAY.acc=0;DAY.state='running';DAY.goalShown=false}
+  DAY.acc=(DAY.acc||0)+mins*60;daySave();ensureTick();
+  E.fp=null;sheetHide();paintBar();render();toast(`${f.title} ${mins}분 기록했어요.`);
+  try{await put('plays/p'+ts,rec)}catch(e){}
 }
 function openComplete(){
   if(!ACT)return;
@@ -1241,11 +1282,11 @@ function repRes(p){
 async function doneActivity(){
   if(!ACT||!FIN)return;
   const t=ACT,f=FIN,ts=Date.now();
-  const rec={card:t.id,kind:t.kind,t:t.title,mins:f.mins,ts,date:today()};
+  const rec={card:t.kind==='free'?'free:'+t.title:t.id,kind:t.kind,t:t.title,mins:f.mins,ts,date:today()};
   if(t.kind==='book'){if(f.rx!=null)rec.i=f.rx}else{if(f.rx!=null)rec.r=f.rx}
   if(f.bk!=null)rec.b=f.bk;
   S.plays.unshift(Object.assign({id:'p'+ts},rec));
-  if(t.kind!=='tool'){PICK[t.kind+'Id']=null;PICK[t.kind+'Lock']=false;pickSave()}
+  if(t.kind==='play'||t.kind==='book'){PICK[t.kind+'Id']=null;PICK[t.kind+'Lock']=false;pickSave()}
   DAY.acc=(DAY.acc||0)+(f.secs!=null?f.secs:segSec());daySave();
   ACT=null;actSave();FIN=null;sheetHide();paintBar();render();
   sheetShow(nextHTML(),'fin');
@@ -1439,7 +1480,7 @@ function libShelfForm(){
 }
 function libRender(){const b=document.querySelector('#sheet .sheet-body');if(!b||!E.lib)return;const y=b.scrollTop;b.innerHTML=libHTML();b.scrollTop=E.lib.sel?0:y}
 function sheetClick(e){
-  const t=e.target.closest('[data-consentgo],[data-joincheck],[data-joinconfirm],[data-shelftoggle],[data-shelfdel],[data-shelfform],[data-shelfsave],[data-shelfcat],[data-sheetclose],[data-libclose],[data-ltab],[data-lfilter],[data-ltile],[data-libback],[data-libpick],[data-frx],[data-fbk],[data-fin]');if(!t)return;
+  const t=e.target.closest('[data-consentgo],[data-joincheck],[data-joinconfirm],[data-shelftoggle],[data-shelfdel],[data-shelfform],[data-shelfsave],[data-shelfcat],[data-sheetclose],[data-libclose],[data-ltab],[data-lfilter],[data-ltile],[data-libback],[data-libpick],[data-frx],[data-fbk],[data-fin],[data-fppick],[data-fpquick],[data-fpstart],[data-fplog],[data-fpback]');if(!t)return;
   const d=t.dataset;
   if(d.consentgo){afterConsent(d.consentgo);return}
   if('joincheck' in d){const v=(document.getElementById('joincode')||{}).value||'';famBusy('코드를 확인하는 중…');joinCheck(v).then(r=>{E.join=r.err?{code:v.toUpperCase(),err:r.err}:{code:r.code,inv:r.inv};sheetShow(joinHTML(),'fin')});return}
@@ -1460,6 +1501,11 @@ function sheetClick(e){
     if(kind==='tool'){startActivity('tool',id)}else{selectItem(kind,id,true);toast('오늘의 '+KINDN[kind]+'로 골랐어요.')}
     return;
   }
+  if(d.fpquick){const i=document.getElementById('fpq');i.value=d.fpquick;document.getElementById('fpres').innerHTML=fpResHTML(d.fpquick);return}
+  if(d.fppick){const j=d.fppick.indexOf(':'),kind=d.fppick.slice(0,j),id=d.fppick.slice(j+1);const title=itemTitle(kind,id);if(!title)return;E.fp={kind,id,title};document.querySelector('#sheet .sheet-body').innerHTML=fpDetailHTML();return}
+  if('fpback' in d){document.querySelector('#sheet .sheet-body').innerHTML=fpHTML();return}
+  if('fpstart' in d){const f=E.fp;if(!f)return;E.fp=null;sheetHide();startActivity(f.kind,f.id);return}
+  if(d.fplog){const f=E.fp;if(!f)return;logPastPlay(f,Number(d.fplog));return}
   if(d.frx!==undefined&&FIN){FIN.rx=FIN.rx===Number(d.frx)?null:Number(d.frx);const b=document.querySelector('#sheet .sheet-body');b.innerHTML=completeHTML();return}
   if(d.fbk!==undefined&&FIN){FIN.bk=FIN.bk===Number(d.fbk)?null:Number(d.fbk);const b=document.querySelector('#sheet .sheet-body');b.innerHTML=completeHTML();return}
   if(d.fin){
@@ -1563,6 +1609,7 @@ function viewDad(){
   const P=resolveItem('play');E.cardId=P.id;
   const c=cardById(P.id);
   return famBanner()+setupCard()+inboxCard()+memoShow()+errandMini()+streakChip()+goalRow()+missionCard('play')+missionCard('book')+todayCard()+checkinCard()+`
+  <button class="card libcard" data-freeplay><span><b>🔍 아이가 하자는 놀이</b><small>퍼즐처럼 검색하거나 적어서 시작·기록</small></span><span class="chev">›</span></button>
   <button class="card libcard" data-openlib><span><b>놀이·도서·도구 도감</b><small>${CARDS.length}개 놀이 · ${(TOOLS.tools||[]).filter(t=>t.track==='A').length}개 도서·도구 · 카테고리별로 보기</small></span><span class="chev">›</span></button>
   ${recFold()}
   ${c?itemsFold(c):''}
@@ -1788,6 +1835,7 @@ function bind(){
   m.querySelectorAll('[data-crec]').forEach(b=>b.onclick=()=>{const k=b.dataset.crec;PICK[k+'Id']=null;PICK[k+'Lock']=false;if(k==='play')S.assign[today()]=null;else S.assignBook[today()]=null;pickSave();render()});
   m.querySelectorAll('[data-start]').forEach(b=>b.onclick=()=>startActivity(b.dataset.start,resolveItem(b.dataset.start).id));
   m.querySelectorAll('[data-openlib]').forEach(b=>b.onclick=()=>openLib('play'));
+  m.querySelectorAll('[data-freeplay]').forEach(b=>b.onclick=()=>openFreePlay());
   m.querySelectorAll('[data-ckin]').forEach(b=>b.onclick=()=>{const [id,l]=b.dataset.ckin.split(':'),ck=ckLoad();ck.n++;ckSave(ck);setLevel(id,Number(l));toast('고마워요! 체크했어요.')});
   m.querySelectorAll('[data-cklater]').forEach(b=>b.onclick=()=>{const ck=ckLoad();ck.skip=true;ckSave(ck);render()});
   m.querySelectorAll('.mslide').forEach(el=>{
@@ -2197,6 +2245,7 @@ if('serviceWorker' in navigator&&/^https?:/.test(location.protocol)&&typeof clau
   const jm=location.search.match(/[?&]join=([A-Za-z0-9]{6})/);
   {let n=0,t0=0;const tap=()=>{const now=Date.now();if(now-t0>3000)n=0;t0=now;n++;if(n>=7){n=0;if(E.local)devToggleFromUI(!DEV.on)}};['who','age'].forEach(id=>{const el=document.getElementById(id);el.addEventListener('click',tap);el.addEventListener('contextmenu',e=>e.preventDefault());el.addEventListener('selectstart',e=>e.preventDefault())})}
   document.getElementById('sheet').addEventListener('click',sheetClick);
+  document.getElementById('sheet').addEventListener('input',e=>{if(e.target.id==='fpq'){const r=document.getElementById('fpres');if(r)r.innerHTML=fpResHTML(e.target.value)}});
   document.getElementById('sheet').addEventListener('change',e=>{const t=e.target.closest('[data-lall]');if(t&&E.lib){E.lib.all=t.checked;libRender()}if(e.target.matches('[data-c1],[data-c2]')){const sh=document.getElementById('sheet'),ok=sh.querySelector('[data-c1]').checked&&sh.querySelector('[data-c2]').checked;sh.querySelector('[data-consentgo]').disabled=!ok}});
   document.getElementById('minibar').addEventListener('click',e=>{if(e.target.closest('[data-mbend]')){if(ACT)openComplete();else openReport()}else window.scrollTo({top:0,behavior:'smooth'})});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden){timerTick();if(dayActive())wakeOn()}});
