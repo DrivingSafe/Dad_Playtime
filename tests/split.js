@@ -21,6 +21,8 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
  await d.waitForTimeout(1500);
  const fam=await d.evaluate(()=>JSON.parse(localStorage.getItem('p_dad_dpn_fam')));
  ok(fam&&/^[A-Z2-9]{6}$/.test(fam.code),'아빠 프로필 키(p_dad_dpn_fam)에 가족 정보 저장 '+(fam&&fam.code));
+ await d.click('[data-tab="conf"]');await d.waitForTimeout(500);
+ ok(await d.evaluate(()=>/코드 다시 받기/.test(document.getElementById('famcard').textContent)&&!!document.getElementById('invcode')),'합류 전 아빠 화면: 코드와 "코드 다시 받기" 버튼이 함께 보임');
  const m=await mk('?profile=mom&join='+fam.code);
  await m.click('[data-c1]');await m.click('[data-c2]');await m.click('[data-consentgo]');await m.waitForTimeout(500);
  await m.click('[data-joincheck]');await m.waitForTimeout(1500);await m.click('[data-joinconfirm]');
@@ -47,7 +49,7 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
  await m.click('[data-tab="conf"]');await m.waitForTimeout(300);await m.click('[data-famleave]');await m.waitForTimeout(2500);
  await d.waitForFunction(()=>!!document.querySelector('[data-tab="conf"]'),null,{timeout:3000});
  await d.click('[data-tab="conf"]');await d.waitForTimeout(800);
- ok(await d.evaluate(()=>/해제했어요/.test(document.getElementById('famcard').textContent)&&!!document.querySelector('[data-newinvite]')&&!document.getElementById('invcode')),'해제 후 아빠: 이전(사용된) 코드 숨기고 새 코드 만들기 안내');
+ ok(await d.evaluate(()=>/이미 쓰여서/.test(document.getElementById('famcard').textContent)&&!!document.querySelector('[data-newinvite]')&&!document.getElementById('invcode')),'해제 후 아빠: 이전(사용된) 코드 숨기고 새 코드 만들기 안내');
  await d.click('[data-newinvite]');await d.waitForTimeout(2500);
  const code2=await d.evaluate(()=>(document.getElementById('invcode')||{}).textContent);
  ok(/^[A-Z2-9]{6}$/.test(code2||'')&&code2!==fam.code,'새 초대 코드 발급 '+code2);
@@ -61,9 +63,9 @@ let fails=0;const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m);if(!c)fails++};
  await m3.click('[data-joincheck]');await m3.waitForTimeout(1500);
  ok(/이미 사용된 코드/.test(await m3.textContent('#sheet')),'예전 코드 재사용은 "이미 사용된 코드" 안내');
  await m3.close(); // 같은 호스트 동시 연결 제한(6개) 때문에 끝난 폰은 닫는다
- // --- 폰 분실/교체: 아빠가 "엄마 폰 바꾸기"로 기존 엄마 폰(m2)을 내보내고 새 코드로 새 폰(m4) 연결
+ // --- 폰 분실/교체: 아빠가 "코드 다시 받기"로 기존 엄마 폰(m2)을 내보내고 새 코드로 새 폰(m4) 연결
  await d.click('[data-tab="conf"]');await d.waitForTimeout(800);
- ok(await d.evaluate(()=>!!document.querySelector('[data-famreplace]')),'연결된 상태에서 "엄마 폰 바꾸기" 버튼');
+ ok(await d.evaluate(()=>!!document.querySelector('[data-famreplace]')),'연결된 상태에서 "코드 다시 받기" 버튼');
  await d.click('[data-famreplace]');await d.waitForTimeout(3000);
  const code3=await d.evaluate(()=>(document.getElementById('invcode')||{}).textContent);
  ok(/^[A-Z2-9]{6}$/.test(code3||'')&&code3!==code2,'교체 후 새 코드 발급 '+code3);

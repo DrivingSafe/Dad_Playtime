@@ -650,7 +650,7 @@ const BK=['거의 못함','1~2번','3~4번','5번 이상'];
 const RX=['잘 따라함','보통','힘들어함'];
 
 /* ---------- 상태 ---------- */
-const VERSION='0.19.1';
+const VERSION='0.19.2';
 const DEF_BIRTH=(()=>{const d=new Date();d.setMonth(d.getMonth()-30);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const S={cfg:{name:'우리 아이',birth:DEF_BIRTH,sex:'',ck:''},ms:{},plays:[],log:[],body:[],growth:[],ref:{},assign:{},assignBook:{},assignTs:{},errands:[],memo:{},shelf:[],members:[],msgs:[],conf:{},fb:[]};
 const E={booting:true,op:{},mk:null,gk:null,cbirth:'',role:null,srole:null,seen:0,sname:'',fbtext:'',fbfeat:'dad',db:null,uid:null,canWrite:true,tab:'dad',cfgSet:false,cardId:null,picked:false,mins:15,left:900,running:false,tick:null,pending:false,rx:null,bk:null,sbirth:'',ssex:'',gh:null,gw:null,gwarn:null,loaded:false};
@@ -734,6 +734,7 @@ const FEATS=[
   {id:'msg',t:'칭찬·채찍질 메시지'}
 ];
 const CHANGES=[
+  {v:'0.19.2',d:'2026-11-07',l:['설정 탭에 "코드 다시 받기" 버튼을 항상 보이게 하고 쉬운 말로 안내 (상대 폰이 바뀔 때 / 코드가 이미 쓰였거나 잃어버렸을 때)','이미 쓰인 코드를 서버에서 확인해 새 코드 받기로 안내']},
   {v:'0.19.1',d:'2026-11-07',l:['상대가 폰을 바꾸거나 잃어버려 초대 코드가 막혔을 때: 설정 탭 "상대 폰 바꾸기"로 기존 폰을 내보내고 새 코드 발급 (보안 규칙도 그에 맞게 조정)','이미 사용된 코드 안내 문구에 해결 방법 추가']},
   {v:'0.19',d:'2026-11-07',l:['아이가 하자는 놀이를 검색(예: 퍼즐)하거나 직접 적어서 시작하고, 이미 한 놀이는 분 단위로 기록','자유 놀이도 하루 쌓인 시간·엄마 보고에 포함']},
   {v:'0.18.1',d:'2026-11-06',l:['가족 연결 상태에서 WHO 기준표를 못 불러오던 문제 수정 (공개 정적 파일에서 직접 읽음)','엄마가 바꾼 오늘 지시가 폰 시계 차이와 상관없이 아빠 화면에 우선 반영, 바뀌면 알림']},
@@ -1826,7 +1827,7 @@ function bind(){
   m.querySelectorAll('[data-sharecode]').forEach(b=>b.onclick=async()=>{const f=lsGet(FAM_KEY,{}),link=`${location.origin}${location.pathname}?join=${f.code}`,text=`놀이수첩 가족 초대 코드: ${f.code}\n${link}`;try{if(navigator.share)await navigator.share({title:'놀이수첩 가족 초대',text,url:link});else{await navigator.clipboard.writeText(text);toast('코드와 링크를 복사했어요.')}}catch(e){}});
   m.querySelectorAll('[data-newinvite]').forEach(b=>b.onclick=async()=>{famBusy('새 코드를 만드는 중…');try{await newInvite();sheetHide();E.fam=lsGet(FAM_KEY,null);render()}catch(e){sheetHide();toast('만들지 못했어요. 다시 시도해 주세요.')}});
   m.querySelectorAll('[data-famswitch]').forEach(b=>b.onclick=async()=>{const f=lsGet(FAM_KEY,{}),to=f.role==='mom'?'아빠':'엄마';if(!confirm(`이 폰의 역할을 ${to}로 바꾸고 새 초대 코드를 만들까요? 이전 코드는 쓸 수 없게 돼요.`))return;famBusy('역할을 바꾸는 중…');const r=await switchFamilyRole();if(r.err){sheetShow(`<div class="sheet-grab"></div><h2>바꾸지 못했어요</h2><p class="muted">${esc(r.err)}</p><div class="fin-actions"><button class="btn big" data-sheetclose>닫기</button></div>`,'fin');return}location.reload()});
-  m.querySelectorAll('[data-famreplace]').forEach(b=>b.onclick=async()=>{const f=lsGet(FAM_KEY,{}),o=f.role==='mom'?'아빠':'엄마';if(!confirm(`${o} 폰을 가족에서 내보내고 새 초대 코드를 만들까요? 기존 ${o} 폰은 더 이상 기록을 볼 수 없어요. 기록은 그대로 남아요.`))return;famBusy('바꾸는 중…');const r=await replacePartner();sheetHide();if(r.err){toast(r.err);return}E.fam=lsGet(FAM_KEY,null);render();toast('새 코드를 만들었어요. 새 폰에 코드를 입력해 주세요.')});
+  m.querySelectorAll('[data-famreplace]').forEach(b=>b.onclick=async()=>{const f=lsGet(FAM_KEY,{}),o=f.role==='mom'?'아빠':'엄마';if(!confirm(`새 코드를 받을까요?\n지금 연결된 ${o} 폰은 끊기고, 새 폰에 새 코드를 넣어야 해요.\n기록은 그대로 남아요.`))return;famBusy('바꾸는 중…');const r=await replacePartner();sheetHide();if(r.err){toast(r.err);return}E.fam=lsGet(FAM_KEY,null);render();toast('새 코드를 만들었어요. 새 폰에 코드를 입력해 주세요.')});
   m.querySelectorAll('[data-famleave]').forEach(b=>b.onclick=async()=>{if(!confirm('이 폰의 가족 연결을 해제할까요? 상대 폰과 기록은 그대로 남아요.'))return;famBusy('연결을 해제하는 중…');await leaveFamily();location.reload()});
   m.querySelectorAll('[data-famwipe]').forEach(b=>b.onclick=async()=>{if(!confirm('가족 기록(아이 정보, 놀이·도서 기록, 심부름, 메모, 메시지 등)을 모두 삭제할까요? 엄마·아빠 두 폰에서 모두 사라지고 되돌릴 수 없어요.'))return;famBusy('기록을 삭제하는 중…');try{const n=await deleteFamilyData();sheetHide();toast(n+'개 기록을 삭제했어요.');setTimeout(()=>location.reload(),900)}catch(e){sheetHide();toast('삭제하지 못했어요. 다시 시도해 주세요.')}});
   m.querySelectorAll('[data-goal]').forEach(b=>b.onclick=()=>{GOAL=Number(b.dataset.goal);lsSet(GOAL_KEY,GOAL);render()});
@@ -2152,7 +2153,7 @@ async function replacePartner(){
     b.delete(F.doc(db,`families/${fam.fid}/roles/${fam.role==='mom'?'dad':'mom'}`));
     await b.commit();
   }catch(e){return{err:'상대 폰을 내보내지 못했어요. 인터넷 연결을 확인해 주세요.'}}
-  try{await newInvite()}catch(e){return{err:'새 코드를 만들지 못했어요. 설정 탭에서 "새 초대 코드 만들기"를 눌러 주세요.'}}
+  try{await newInvite()}catch(e){return{err:'새 코드를 만들지 못했어요. 설정 탭에서 "코드 다시 받기"를 눌러 주세요.'}}
   return{ok:true};
 }
 async function switchFamilyRole(){
@@ -2230,19 +2231,26 @@ async function afterConsent(kind){
   try{await createFamily();location.reload()}
   catch(e){sheetShow(`<div class="sheet-grab"></div><h2>연결하지 못했어요</h2><p class="muted">인터넷 연결을 확인하고 다시 시도해 주세요.</p><div class="fin-actions"><button class="btn big" data-sheetclose>닫기</button></div>`,'fin')}
 }
+/* 코드가 이미 쓰였는지 서버에서 확인: 상대가 합류했다가 나갔어도(이 폰이 연결된 걸 못 봤어도) 쓰인 코드를 보여 주지 않는다 */
+async function checkCodeUsed(code){
+  try{const {db,F}=await fbLoad();await fbUid();const sn=await F.getDoc(F.doc(db,'invites/'+code));
+    if(sn.exists()&&sn.data().usedBy){const f=lsGet(FAM_KEY,null);if(f&&f.code===code){f.wasPaired=true;lsSet(FAM_KEY,f);E.fam=f;render()}}}catch(e){}
+}
 function famCard(){
   const fam=E.fam||lsGet(FAM_KEY,null);if(!fam)return '';
   const roles=(S.members||[]).map(m=>m.role),me=fam.role==='mom'?'엄마':'아빠',other=fam.role==='mom'?'아빠':'엄마';
   const paired=roles.includes(fam.role==='mom'?'dad':'mom');
   if(paired&&!fam.wasPaired){fam.wasPaired=true;lsSet(FAM_KEY,fam)}
+  if(!paired&&!fam.wasPaired&&fam.code){(E.codeChk=E.codeChk||{});if(!E.codeChk[fam.code]){E.codeChk[fam.code]=1;checkCodeUsed(fam.code)}}
   const exp=fam.codeExp&&fam.codeExp>Date.now()&&!fam.wasPaired;
   const link=`${location.origin}${location.pathname}?join=${fam.code||''}`;
   return `<section class="card" id="famcard"><h3>엄마·아빠 폰 연결</h3>
   <p style="margin:6px 0"><span class="tag ok">연결됨</span> 이 폰은 <b>${me}</b> · ${paired?`<b>${other}</b>도 연결됐어요 ✓`:`${other}를 기다리는 중이에요`}</p>
   ${paired?'<p class="muted">심부름·메모·지시·보고가 두 폰에서 같이 보여요.</p>':(exp&&fam.code?`<div class="codebox"><div class="muted">${other}에게 이 코드를 알려 주세요 (7일간, 한 번만 쓸 수 있어요)</div><div class="code" id="invcode">${esc(fam.code)}</div>
     <div class="row" style="gap:8px;margin-top:8px"><button class="btn sm" data-sharecode>코드·링크 공유</button><button class="btn ghost sm" data-copycode>코드 복사</button></div><p class="tmeta" style="margin-top:6px">${esc(link)}</p></div>`
-    :`<p class="muted">${fam.wasPaired?`${other} 폰이 연결을 해제했어요. 다른 폰을 연결하려면 새 초대 코드를 만들어 주세요. (이전 코드는 한 번 쓰이면 다시 쓸 수 없어요)`:'초대 코드가 만료됐어요.'}</p><button class="btn sm" data-newinvite>새 초대 코드 만들기</button>`)}
-  ${paired?`<div style="margin-top:10px"><button class="btn ghost sm" data-famreplace>${other} 폰 바꾸기 (분실·기기 변경)</button><p class="tmeta" style="margin-top:4px">${other}가 폰을 바꿨거나 잃어버려 코드가 막혔을 때 눌러요. 기존 ${other} 폰은 연결이 끊기고 새 코드가 만들어져요.</p></div>`:''}
+    :`<p class="muted">${fam.wasPaired?`예전 코드는 이미 쓰여서 다시 쓸 수 없어요. 아래 "코드 다시 받기"를 눌러 새 코드를 만들어 주세요.`:'코드 기간(7일)이 지났어요. 새 코드를 받아 주세요.'}</p><button class="btn sm" data-newinvite>코드 다시 받기</button>`)}
+  ${paired?`<div style="margin-top:10px"><button class="btn sm" data-famreplace>🔄 코드 다시 받기 (${other} 폰이 바뀔 때)</button><p class="tmeta" style="margin-top:4px">${other}가 폰을 바꾸거나 잃어버렸을 때 눌러요. 지금 연결된 ${other} 폰은 끊기고, 새 폰에 넣을 새 코드가 나와요. 기록은 그대로예요.</p></div>`:''}
+  ${paired||!(exp&&fam.code)?'':`<div style="margin-top:10px"><button class="btn ghost sm" data-newinvite>코드 다시 받기 (코드를 잃어버렸거나 못 쓸 때)</button></div>`}
   ${paired?'':`<div style="margin-top:10px"><button class="btn ghost sm" data-famswitch>역할을 잘못 골랐어요 (${me} → ${other}로 바꾸기)</button></div>`}
   <div class="row" style="gap:8px;margin-top:12px"><button class="btn ghost sm" data-famleave>이 폰 연결 해제</button><button class="btn ghost sm" data-famwipe>가족 기록 모두 삭제</button></div>
   <p class="tmeta" style="margin-top:6px">연결 해제는 이 폰만 가족에서 빠져요. 상대 폰과 기록은 그대로예요.</p></section>`;

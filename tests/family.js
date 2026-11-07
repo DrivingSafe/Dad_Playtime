@@ -109,7 +109,7 @@ const W=ms=>new Promise(r=>setTimeout(r,ms));
  // 새 코드로 다른 엄마 폰 합류 가능
  await a.evaluate(()=>{const f=JSON.parse(localStorage.getItem('dpn_fam'));f.codeExp=1;localStorage.setItem('dpn_fam',JSON.stringify(f))});await a.reload();await a.waitForTimeout(1500);
  await a.click('[data-tab="conf"]');await a.waitForTimeout(500);
- ok(!!(await a.$('[data-newinvite]')),'코드가 만료되면 "새 초대 코드 만들기"');
+ ok(!!(await a.$('[data-newinvite]')),'코드가 만료되면 "코드 다시 받기"');
  await a.click('[data-newinvite]');await a.waitForTimeout(2500);
  const code2=await a.evaluate(()=>JSON.parse(localStorage.getItem('dpn_fam')).code);ok(code2&&code2!==fam.code,'새 코드 발급 ('+code2+')');
  await c.fill('#joincode',code2).catch(()=>{});
