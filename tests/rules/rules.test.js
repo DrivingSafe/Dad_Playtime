@@ -73,7 +73,9 @@ const T=async(m,p,expectOk)=>{try{if(expectOk)await assertSucceeds(p);else await
  await T('역할 바꾸기 거부(bob: 엄마→아빠)',dbOf('bob').doc('families/f1/members/bob').update({role:'dad'}),false);
  await T('seen(읽은 시각)만 갱신 허용',dbOf('bob').doc('families/f1/members/bob').update({seen:now}),true);
  await T('다른 사람의 구성원 문서 수정 거부',dbOf('bob').doc('families/f1/members/alice').update({seen:1}),false);
- await T('다른 사람의 구성원 문서 삭제 거부',dbOf('bob').doc('families/f1/members/alice').delete(),false);
+ await T('같은 역할의 다른 사람이 구성원 문서 삭제 거부',dbOf('eve').doc('families/f1/members/alice').delete(),false);
+ await T('비구성원이 구성원 문서 삭제 거부',dbOf('mallory').doc('families/f1/members/bob').delete(),false);
+ await T('구성원(bob)이 자리표만 지워 중복 합류 시도 거부(구성원 문서 그대로)',dbOf('bob').doc('families/f1/roles/dad').delete(),false);
  // ---- 초대 다시 만들기(구성원이 상대 역할로) ----
  await T('구성원(alice=아빠)이 엄마용 새 초대 만들기(초대 자체는 허용)',(async()=>{const db=dbOf('alice'),b=db.batch();b.set(db.doc('invites/CODE02'),{familyId:'f1',role:'mom',createdBy:'alice',usedBy:null,expiresAt:now+H});return b.commit()})(),true);
  await T('같은 역할 초대는 만들 수 없음(아빠가 아빠 초대)',(async()=>{const db=dbOf('alice'),b=db.batch();b.set(db.doc('invites/CODE03'),{familyId:'f1',role:'dad',createdBy:'alice',usedBy:null,expiresAt:now+H});return b.commit()})(),false);
@@ -84,6 +86,13 @@ const T=async(m,p,expectOk)=>{try{if(expectOk)await assertSucceeds(p);else await
  await T('users: 다른 사람 문서 읽기 거부',dbOf('eve').doc('users/alice').get(),false);
  // ---- 연결 해제·삭제 ----
  await T('역할 자리표를 다른 사람이 지우기 거부',dbOf('alice').doc('families/f1/roles/mom').delete(),false);
+ await T('상대 폰 교체: alice(아빠)가 bob(엄마)의 구성원 문서+자리표 삭제 (폰 분실)',(async()=>{const db=dbOf('alice'),b=db.batch();b.delete(db.doc('families/f1/members/bob'));b.delete(db.doc('families/f1/roles/mom'));return b.commit()})(),true);
+ await T('교체 후 새 초대로 새 엄마 폰(dave) 합류',(async()=>{const db=dbOf('alice'),b=db.batch();b.set(db.doc('invites/CODE09'),{familyId:'f1',role:'mom',createdBy:'alice',usedBy:null,expiresAt:now+H});await b.commit();return join('dave','f1','CODE09','mom')})(),true);
+ await T('교체 후 이전 엄마 폰(bob)은 가족 데이터 접근 거부',dbOf('bob').doc('families/f1/plays/p1').get(),false);
+ await T('엄마(dave)가 아빠 폰 교체: 아빠 구성원+자리표 삭제',(async()=>{const db=dbOf('dave'),b=db.batch();b.delete(db.doc('families/f1/members/alice'));b.delete(db.doc('families/f1/roles/dad'));return b.commit()})(),true);
+ await T('아빠 폰 교체 후 새 아빠 폰(frank)이 새 초대로 합류',(async()=>{const db=dbOf('dave'),b=db.batch();b.set(db.doc('invites/CODE10'),{familyId:'f1',role:'dad',createdBy:'dave',usedBy:null,expiresAt:now+H});await b.commit();return join('frank','f1','CODE10','dad')})(),true);
+ // 이후 시나리오가 원래 구성(alice=아빠, bob=엄마)을 전제하므로 되돌림
+ await env.withSecurityRulesDisabled(async c=>{const d=c.firestore();for(const u of ['dave','frank']){await d.doc('families/f1/members/'+u).delete()}await d.doc('families/f1/roles/mom').delete();await d.doc('families/f1/roles/dad').delete();await d.doc('families/f1/members/alice').set({role:'dad',joinedAt:now,seen:0});await d.doc('families/f1/members/bob').set({role:'mom',joinedAt:now,seen:0});await d.doc('families/f1/roles/dad').set({uid:'alice',at:now});await d.doc('families/f1/roles/mom').set({uid:'bob',at:now})});
  await T('구성원(bob): 이 기기 연결 해제(구성원 + 역할 자리표 삭제)',(async()=>{const db=dbOf('bob'),b=db.batch();b.delete(db.doc('families/f1/members/bob'));b.delete(db.doc('families/f1/roles/mom'));return b.commit()})(),true);
  await T('연결 해제 후 새 초대로 다른 엄마(carol) 합류 가능',join('carol','f1','CODE02','mom'),true);
  await T('해제한 bob: 가족 데이터 접근 거부',dbOf('bob').doc('families/f1/plays/p1').get(),false);
