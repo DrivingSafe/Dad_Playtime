@@ -40,9 +40,9 @@ const setup=async p=>{await p.click('[data-ssex="f"]');await p.click('[data-srol
   // ---- 역할별 탭 ----
   const vis=async()=>p.evaluate(()=>[...document.querySelectorAll('nav button')].filter(b=>!b.hidden).map(b=>b.dataset.tab).join());
   await p.click('#devtog');await p.waitForTimeout(200);
-  await p.click('[data-dview="all"]');await p.waitForTimeout(300);ok(await vis()==='dad,mom,errand,check,grow','개발자 전체: 5개 탭 ('+await vis()+')');
-  await p.click('[data-dview="dad"]');await p.waitForTimeout(300);ok(await vis()==='dad,errand,check,grow','아빠 보기: 엄마의 눈 숨김, 심부름은 보임');
-  await p.click('[data-dview="mom"]');await p.waitForTimeout(300);ok(await vis()==='mom,errand,check,grow','엄마 보기: 아빠의 놀이 숨김, 심부름은 보임');
+  await p.click('[data-dview="all"]');await p.waitForTimeout(300);ok(await vis()==='errand,dad,mom,check,grow','개발자 전체: 5개 탭 ('+await vis()+')');
+  await p.click('[data-dview="dad"]');await p.waitForTimeout(300);ok(await vis()==='errand,dad,check,grow','아빠 보기: 엄마의 눈 숨김, 할 일은 보임');
+  await p.click('[data-dview="mom"]');await p.waitForTimeout(300);ok(await vis()==='errand,mom,check,grow','엄마 보기: 아빠의 놀이 숨김, 할 일은 보임');
   ok(await p.evaluate(()=>E.tab==='mom'||E.tab==='check'||E.tab==='grow'),'엄마 보기: 보이지 않는 탭에 머물지 않음');
   ok(!errs.length,'페이지 오류 없음 '+errs);await ctx.close();
  }

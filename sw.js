@@ -1,6 +1,6 @@
 /* 서비스 워커: 앱 본체와 WHO 표를 캐시해 오프라인에서도 열리게 한다.
    index.html 을 고칠 때마다 VERSION 을 올려야 기존 설치본이 새 버전으로 바뀐다. */
-const VERSION='dpn-v0.19.2';
+const VERSION='dpn-v0.20';
 const SHELL=['./','./index.html','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png',
   './data/tools.json','./data/books.json','./data/who/doc_wfa_m.json','./data/who/doc_wfa_f.json','./data/who/doc_lfa_m.json','./data/who/doc_lfa_f.json'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(VERSION).then(c=>c.addAll(SHELL)).then(()=>self.skipWaiting()))});
@@ -18,4 +18,12 @@ self.addEventListener('fetch',e=>{
     return;
   }
   e.respondWith(caches.match(r).then(h=>h||fetch(r).then(res=>{if(res.ok){const cp=res.clone();caches.open(VERSION).then(c=>c.put(r,cp))}return res})));
+});
+/* 알림을 누르면 앱을 열거나 이미 열린 앱으로 돌아온다 */
+self.addEventListener('notificationclick',e=>{
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({type:'window',includeUncontrolled:true}).then(l=>{
+    for(const c of l){if('focus' in c)return c.focus()}
+    return self.clients.openWindow('./#errand');
+  }));
 });

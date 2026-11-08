@@ -28,7 +28,7 @@ const W=ms=>new Promise(r=>setTimeout(r,ms));
  await p.click('[data-cnav="play:1"]');await p.waitForTimeout(700);
  await p.click('[data-cnav="play:1"]');await p.waitForTimeout(700);
  const browsed=await T('#card-play .order');ok(browsed!==playTitle,'카드를 넘겨 다른 놀이로');
- await p.reload();await p.waitForTimeout(900);
+ await p.reload();await p.waitForTimeout(900);await p.click('[data-tab=\"dad\"]');await p.waitForTimeout(250);
  ok(await T('#card-play .order')===browsed,'새로고침해도 내가 고른 놀이 유지(시스템 추천으로 되돌아가지 않음)');
  ok(await p.evaluate(()=>GOAL===30),'목표 시간 선택도 새로고침 후 유지');
 
@@ -46,7 +46,7 @@ const W=ms=>new Promise(r=>setTimeout(r,ms));
 
  // ---- 새로고침해도 카운트·진행 중인 놀이 유지 ----
  const startBefore=await p.evaluate(()=>ACT.start);
- await p.reload();await p.waitForTimeout(1200);
+ await p.reload();await p.waitForTimeout(1200);await p.click('[data-tab=\"dad\"]');await p.waitForTimeout(250);
  ok(await p.evaluate(e=>!!ACT&&ACT.start===e&&DAY.state==='running',startBefore),'새로고침 후에도 같은 시작 시각, 진행 중인 놀이 유지');
  ok(await T('#card-play .order')===browsed,'시작한 놀이가 새로고침 후에도 메인');
  await p.waitForTimeout(1500);ok(await p.evaluate(()=>dayRemain())<=1798,'새로고침 중에도 시간이 흘렀음');
