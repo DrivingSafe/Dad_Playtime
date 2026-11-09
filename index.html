@@ -4,13 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>15분 놀이수첩</title>
+<title>아빠 알림장</title>
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#2B7A66">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="놀이수첩">
+<meta name="apple-mobile-web-app-title" content="아빠알림장">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -651,7 +651,7 @@ const BK=['거의 못함','1~2번','3~4번','5번 이상'];
 const RX=['잘 따라함','보통','힘들어함'];
 
 /* ---------- 상태 ---------- */
-const VERSION='0.20';
+const VERSION='0.20.1';
 const DEF_BIRTH=(()=>{const d=new Date();d.setMonth(d.getMonth()-30);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')})();
 const S={cfg:{name:'우리 아이',birth:DEF_BIRTH,sex:'',ck:''},ms:{},plays:[],log:[],body:[],growth:[],ref:{},assign:{},assignBook:{},assignTs:{},errands:[],memo:{},shelf:[],members:[],msgs:[],conf:{},fb:[]};
 const E={booting:true,op:{},mk:null,gk:null,cbirth:'',role:null,srole:null,seen:0,sname:'',fbtext:'',fbfeat:'dad',db:null,uid:null,canWrite:true,tab:'dad',cfgSet:false,cardId:null,picked:false,mins:15,left:900,running:false,tick:null,pending:false,rx:null,bk:null,sbirth:'',ssex:'',gh:null,gw:null,gwarn:null,loaded:false};
@@ -735,6 +735,7 @@ const FEATS=[
   {id:'msg',t:'칭찬·채찍질 메시지'}
 ];
 const CHANGES=[
+  {v:'0.20.1',d:'2026-11-09',l:['앱 이름을 "아빠 알림장"으로 변경 (제목·설치 이름·공유 문구)']},
   {v:'0.20',d:'2026-11-08',l:['앱의 중심을 "할 일"로: 엄마 부탁이 카톡에 묻히지 않게, 전화·말로 받은 부탁도 아빠가 바로 적기','알람: 시간을 정하면 소리·진동·알림이 울리고, 끝낼 때까지 10분마다 다시 알림 (앱이 열려 있거나 백그라운드일 때)','폰 알람(캘린더)에 넣기: 앱이 닫혀 있어도 폰이 알려 줌','엄마 화면: 아빠가 봤는지 표시, 👋 재촉하기, 반복(매일·매주), ❗ 중요']},
   {v:'0.19.2',d:'2026-11-07',l:['설정 탭에 "코드 다시 받기" 버튼을 항상 보이게 하고 쉬운 말로 안내 (상대 폰이 바뀔 때 / 코드가 이미 쓰였거나 잃어버렸을 때)','이미 쓰인 코드를 서버에서 확인해 새 코드 받기로 안내']},
   {v:'0.19.1',d:'2026-11-07',l:['상대가 폰을 바꾸거나 잃어버려 초대 코드가 막혔을 때: 설정 탭 "상대 폰 바꾸기"로 기존 폰을 내보내고 새 코드 발급 (보안 규칙도 그에 맞게 조정)','이미 사용된 코드 안내 문구에 해결 방법 추가']},
@@ -1127,7 +1128,7 @@ function errAlarmTick(){
     if(navigator.serviceWorker&&navigator.serviceWorker.ready)navigator.serviceWorker.ready.then(r=>r.showNotification('⏰ '+e0.text+more,o));else new Notification('⏰ '+e0.text+more,o)}}catch(x){}
   paintErrBadge();render();
 }
-function paintErrBadge(){const n=errandOpen().filter(errOverdue).length;try{if(navigator.setAppBadge){n?navigator.setAppBadge(n):navigator.clearAppBadge()}}catch(x){}document.title=(n?'('+n+') ':'')+'15분 놀이수첩'}
+function paintErrBadge(){const n=errandOpen().filter(errOverdue).length;try{if(navigator.setAppBadge){n?navigator.setAppBadge(n):navigator.clearAppBadge()}}catch(x){}document.title=(n?'('+n+') ':'')+'아빠 알림장'}
 function ensureErrTimer(){if(!ERR_T)ERR_T=setInterval(errAlarmTick,20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)errAlarmTick()})}
 /* 폰 캘린더 알람(.ics): 앱이 완전히 닫혀 있어도 폰이 알려 준다 */
 function icsEsc(t){return String(t).replace(/\\/g,'\\\\').replace(/;/g,'\;').replace(/,/g,'\\,').replace(/\n/g,'\\n')}
@@ -1211,7 +1212,7 @@ function exportData(){
   const keys={};
   try{[DEV.on?'dpn_db_dev':'dpn_db',...BK_KEYS].forEach(k=>{const v=LS.getItem(k);if(v!=null)keys[k]=v})}catch(e){}
   const blob=new Blob([JSON.stringify({app:'15min-play-notebook',v:1,saved:new Date().toISOString(),keys})],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='놀이수첩-백업-'+today()+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='아빠 알림장-백업-'+today()+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);
   toast('백업 파일을 저장했어요.');
 }
 function importData(file){
@@ -1951,7 +1952,7 @@ function bind(){
   m.querySelectorAll('[data-famjoin]').forEach(b=>b.onclick=()=>openConsent('join'));
   m.querySelectorAll('[data-reload]').forEach(b=>b.onclick=()=>location.reload());
   m.querySelectorAll('[data-copycode]').forEach(b=>b.onclick=async()=>{const f=lsGet(FAM_KEY,{});try{await navigator.clipboard.writeText(f.code||'');toast('코드를 복사했어요.')}catch(e){toast('코드: '+(f.code||''))}});
-  m.querySelectorAll('[data-sharecode]').forEach(b=>b.onclick=async()=>{const f=lsGet(FAM_KEY,{}),link=`${location.origin}${location.pathname}?join=${f.code}`,text=`놀이수첩 가족 초대 코드: ${f.code}\n${link}`;try{if(navigator.share)await navigator.share({title:'놀이수첩 가족 초대',text,url:link});else{await navigator.clipboard.writeText(text);toast('코드와 링크를 복사했어요.')}}catch(e){}});
+  m.querySelectorAll('[data-sharecode]').forEach(b=>b.onclick=async()=>{const f=lsGet(FAM_KEY,{}),link=`${location.origin}${location.pathname}?join=${f.code}`,text=`아빠 알림장 가족 초대 코드: ${f.code}\n${link}`;try{if(navigator.share)await navigator.share({title:'아빠 알림장 가족 초대',text,url:link});else{await navigator.clipboard.writeText(text);toast('코드와 링크를 복사했어요.')}}catch(e){}});
   m.querySelectorAll('[data-newinvite]').forEach(b=>b.onclick=async()=>{famBusy('새 코드를 만드는 중…');try{await newInvite();sheetHide();E.fam=lsGet(FAM_KEY,null);render()}catch(e){sheetHide();toast('만들지 못했어요. 다시 시도해 주세요.')}});
   m.querySelectorAll('[data-famswitch]').forEach(b=>b.onclick=async()=>{const f=lsGet(FAM_KEY,{}),to=f.role==='mom'?'아빠':'엄마';if(!confirm(`이 폰의 역할을 ${to}로 바꾸고 새 초대 코드를 만들까요? 이전 코드는 쓸 수 없게 돼요.`))return;famBusy('역할을 바꾸는 중…');const r=await switchFamilyRole();if(r.err){sheetShow(`<div class="sheet-grab"></div><h2>바꾸지 못했어요</h2><p class="muted">${esc(r.err)}</p><div class="fin-actions"><button class="btn big" data-sheetclose>닫기</button></div>`,'fin');return}location.reload()});
   m.querySelectorAll('[data-famreplace]').forEach(b=>b.onclick=async()=>{const f=lsGet(FAM_KEY,{}),o=f.role==='mom'?'아빠':'엄마';if(!confirm(`새 코드를 받을까요?\n지금 연결된 ${o} 폰은 끊기고, 새 폰에 새 코드를 넣어야 해요.\n기록은 그대로 남아요.`))return;famBusy('바꾸는 중…');const r=await replacePartner();sheetHide();if(r.err){toast(r.err);return}E.fam=lsGet(FAM_KEY,null);render();toast('새 코드를 만들었어요. 새 폰에 코드를 입력해 주세요.')});

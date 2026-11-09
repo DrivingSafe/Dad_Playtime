@@ -1,7 +1,7 @@
 {
-  "name": "15분 놀이수첩",
-  "short_name": "놀이수첩",
-  "description": "퇴근 후 15분, 월령에 맞는 놀이를 안내하는 육아 수첩",
+  "name": "아빠 알림장",
+  "short_name": "아빠알림장",
+  "description": "엄마 부탁을 잊지 않게 챙기고, 아이와 놀아 주는 아빠를 위한 알림장",
   "lang": "ko",
   "id": "/Dad_Playtime/app-v2",
   "start_url": "./index.html",
